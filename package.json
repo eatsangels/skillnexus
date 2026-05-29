@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "description": "Desktop version of Skill & Agent Dashboard",
   "main": "electron-main.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eatsangels/id_skills.git"
+  },
+  "author": "eatsangels",
   "scripts": {
     "dev:web": "powershell -File ./skill-dashboard/start.ps1",
     "dev:electron": "concurrently \"node skill-dashboard/backend/src/server.js\" \"npm --prefix skill-dashboard/frontend run dev\" \"wait-on http://localhost:5173 && cross-env ELECTRON_DEV=true electron .\"",
@@ -44,6 +49,11 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "ID Skills Dashboard"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "eatsangels",
+      "repo": "id_skills"
     }
   }
 }
