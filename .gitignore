@@ -5,6 +5,8 @@ node_modules/
 # Production builds
 dist/
 **/dist/
+dist-desktop/
+**/dist-desktop/
 
 # Logs
 *.log

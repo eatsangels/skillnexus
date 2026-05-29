@@ -1,0 +1,49 @@
+{
+  "name": "id_skills-desktop",
+  "version": "1.0.0",
+  "description": "Desktop version of Skill & Agent Dashboard",
+  "main": "electron-main.js",
+  "scripts": {
+    "dev:web": "powershell -File ./skill-dashboard/start.ps1",
+    "dev:electron": "concurrently \"node skill-dashboard/backend/src/server.js\" \"npm --prefix skill-dashboard/frontend run dev\" \"wait-on http://localhost:5173 && cross-env ELECTRON_DEV=true electron .\"",
+    "build:frontend": "npm --prefix skill-dashboard/frontend run build",
+    "package:dir": "npm run build:frontend && electron-packager . \"ID Skills Dashboard\" --platform=win32 --arch=x64 --out=dist-desktop --overwrite",
+    "package:dist": "npm run build:frontend && electron-builder"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
+    "electron": "^30.0.9",
+    "electron-builder": "^24.13.3",
+    "electron-packager": "^17.1.2",
+    "wait-on": "^7.2.0"
+  },
+  "dependencies": {
+    "electron-updater": "^6.1.7"
+  },
+  "build": {
+    "appId": "com.eatsangels.idskills",
+    "productName": "ID Skills Dashboard",
+    "directories": {
+      "output": "dist-desktop"
+    },
+    "files": [
+      "electron-main.js",
+      "skill-dashboard/backend/src/**/*",
+      "skill-dashboard/backend/node_modules/**/*",
+      "skill-dashboard/frontend/dist/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "skill-dashboard/frontend/public/favicon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "ID Skills Dashboard"
+    }
+  }
+}
