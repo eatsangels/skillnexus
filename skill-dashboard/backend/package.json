@@ -1,0 +1,17 @@
+{
+  "name": "skill-dashboard-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "@vitalets/google-translate-api": "^9.2.1",
+    "adm-zip": "^0.5.16",
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "gray-matter": "^4.0.3"
+  }
+}

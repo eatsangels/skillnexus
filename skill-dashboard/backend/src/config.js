@@ -1,0 +1,79 @@
+import { homedir, userInfo } from "os";
+import { join } from "path";
+
+export const CONFIG = {
+  port: 3001,
+  scanPaths: {
+    globalConfig: join(homedir(), ".config", "opencode", "opencode.jsonc"),
+    projectConfigs: [
+      join(homedir(), "Documents", "curso-opencode", "opencode.json"),
+    ],
+    skillDirectories: [
+      join(homedir(), "Documents", "curso-opencode", ".opencode", "skills"),
+    ],
+    skillFiles: [
+      join(homedir(), "Documents", "curso-opencode"),
+      join(homedir(), "Documents", "mu02", "mu02"),
+    ],
+    claudeAgentsDir: join(homedir(), ".claude", "agents"),
+  },
+  builtInAgents: [
+    {
+      name: "build",
+      mode: "primary",
+      description: "Agente de codificación principal para implementar características y corregir errores",
+      native: true,
+      color: "primary",
+    },
+    {
+      name: "plan",
+      mode: "primary",
+      description: "Experto en arquitectura y planificación para diseñar soluciones",
+      native: true,
+      color: "secondary",
+    },
+    {
+      name: "general",
+      mode: "all",
+      description: "Agente de propósito general para tareas abiertas",
+      native: true,
+      color: "accent",
+    },
+    {
+      name: "explore",
+      mode: "subagent",
+      description: "Especialista en exploración y análisis de código",
+      native: true,
+      color: "info",
+    },
+    {
+      name: "scout",
+      mode: "primary",
+      description: "Agente de reconocimiento para auditoría de código",
+      native: true,
+      color: "warning",
+    },
+    {
+      name: "title",
+      mode: "primary",
+      description: "Genera títulos de conversación según el contexto",
+      native: true,
+      color: "success",
+      model: { modelID: "gpt-5-nano" },
+    },
+    {
+      name: "summary",
+      mode: "primary",
+      description: "Genera resúmenes de conversaciones",
+      native: true,
+      color: "success",
+    },
+    {
+      name: "compaction",
+      mode: "primary",
+      description: "Maneja la compactación de sesiones y gestión de contexto",
+      native: true,
+      color: "error",
+    },
+  ],
+};

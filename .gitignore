@@ -1,0 +1,26 @@
+# Node
+node_modules/
+**/node_modules/
+
+# Production builds
+dist/
+**/dist/
+
+# Logs
+*.log
+logs/
+**/logs/
+
+# IDEs and editors
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+
+# Temporary agent playground runs
+playground_cwd/
+**/playground_cwd/
