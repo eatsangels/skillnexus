@@ -6,30 +6,62 @@ This document provides context, architecture details, and operational rules for 
 
 ## 🏗️ Repository Architecture
 
-The project consists of a single repository containing a local dashboard to manage and run AI agent skills.
+The project is a **dual-mode application**: a local web dashboard AND an installable Electron desktop app, sharing the same React frontend and Express backend.
 
 ```
 id_skills/
+├── .github/
+│   └── workflows/
+│       └── publish.yml       # CI/CD: Auto-builds & publishes .exe to GitHub Releases on tag push
 ├── skill-dashboard/          # Core Dashboard Workspace
 │   ├── frontend/             # Vite + React Frontend
 │   │   ├── src/
 │   │   │   ├── App.tsx       # Main workspace dashboard layout
-│   │   │   ├── api.ts        # Client API definitions
+│   │   │   ├── api.ts        # Client API definitions (auto-detects electron vs web)
 │   │   │   ├── style.css     # Tailwind CSS v4 variables and custom styles
 │   │   │   └── components/   # Modals, Cards, and Headers
+│   │   ├── vite.config.ts    # base: "./" required for Electron file:// loading
 │   │   └── package.json
 │   ├── backend/              # Node.js Express Backend
 │   │   ├── src/
 │   │   │   ├── api.js        # REST endpoints and Agent execution controller
 │   │   │   ├── server.js     # Server bootstrap and SSE connection hub
 │   │   │   ├── config.js     # Path configuration for skills and agents
-│   │   │   ├── agent-scanner.js # Local agent detector
-│   │   │   └── skills-sh-scanner.js # Offline/online skill installer & resolver
+│   │   │   ├── agent-scanner.js      # Local agent detector
+│   │   │   └── skills-sh-scanner.js  # Offline/online skill installer & resolver
 │   │   └── package.json
 │   ├── .agents/              # Locally loaded agents list
-│   └── start.ps1             # PowerShell script to run both dev servers
-└── README.md                 # User-facing project guide
+│   └── start.ps1             # PowerShell script to run both dev servers (web mode)
+├── electron-main.js          # Electron main process: window, backend fork, auto-updater
+├── package.json              # ROOT: Electron, electron-builder, CI scripts
+├── package-lock.json
+├── README.md                 # Project guide (Spanish, primary)
+└── README.en.md              # Project guide (English)
 ```
+
+---
+
+## 🖥️ Desktop Application (Electron)
+
+### Scripts (run from repo root `c:\ID_Skills`)
+
+| Command | Description |
+|---|---|
+| `npm run dev:web` | Start web dashboard via PowerShell (unchanged) |
+| `npm run dev:electron` | Start desktop app in development mode |
+| `npm run build:frontend` | Build React frontend for production |
+| `npm run package:dist` | Build full Windows installer `.exe` |
+
+### electron-main.js Key Behaviors
+*   **Production**: Forks the Express backend as a child process on app start, loads the built `frontend/dist/index.html` via `file://`.
+*   **Development**: Skips backend fork (started by `concurrently`), loads `http://localhost:5173`.
+*   **Auto-updater**: `electron-updater` checks GitHub Releases on startup. Shows native OS notifications when an update is available and when it is downloaded. Installs automatically on next app restart.
+
+### Release Process (CI/CD)
+*   The file `.github/workflows/publish.yml` runs on `git tag v*` pushes.
+*   It installs all dependencies, builds the frontend, and runs `electron-builder --win --publish always`.
+*   The workflow requires `permissions: contents: write` and uses `GH_TOKEN` (not `GITHUB_TOKEN`) for electron-builder.
+*   Artifacts (`.exe`, `.blockmap`, `latest.yml`) are uploaded to GitHub Releases automatically.
 
 ---
 
@@ -72,7 +104,16 @@ The workspace frontend uses **Tailwind CSS v4** with a custom obsidian dark them
 
 ### Local Path Setup
 *   Skills download directory: `C:\Users\EaTsAngels\Documents\curso-opencode\.opencode\skills`
-*   Workspace workspace root: `C:\ID_Skills`
+*   Workspace root: `C:\ID_Skills`
+
+### API Base URL (Critical for Electron)
+`api.ts` exports `BASE` which auto-detects the runtime environment:
+```typescript
+export const BASE = typeof window !== "undefined" && window.location.protocol === "file:"
+  ? "http://localhost:3001/api"  // Electron: loaded from file://, call backend directly
+  : "/api";                       // Web: Vite dev proxy handles /api -> localhost:3001
+```
+**Always import `BASE` from `../api` for any `fetch()` or `EventSource` calls. Never hardcode `/api`.**
 
 ### Language Preference Sync
 Modals share a global reading language selection via `localStorage` key `"agent-modal-lang"`. When adding modal components, always synchronize state with this key:
@@ -91,3 +132,9 @@ const [lang, setLang] = useState<"en" | "es">(() => {
     *   On Windows, commands spawned via Node.js `child_process.spawn` must be handled carefully. Always resolve the exact path of the executables (e.g. `opencode.exe` or `powershell.exe`) and configure the `shell` option appropriately.
 2.  **SSE Connections**:
     *   Do not close the SSE response stream on `req.on('close')` immediately if the child process is still booting. Use `res.on('close')` to clean up active children to prevent premature process termination.
+3.  **Vite `base` config**:
+    *   `vite.config.ts` must have `base: "./"`. Without it, the compiled `index.html` uses absolute paths (`/assets/...`) that fail when loaded via `file://` in Electron.
+4.  **electron-builder WinCodeSign on Windows without admin**:
+    *   The `winCodeSign` tool fails to extract macOS symlinks on Windows without Developer Mode or admin privileges. Pre-extract its `.7z` cache using `7za.exe x ... -x!darwin -x!linux` to bypass the error locally.
+5.  **GitHub Actions permissions for Releases**:
+    *   The publish workflow MUST have `permissions: contents: write`. Without it, electron-builder cannot create the GitHub Release. Use `GH_TOKEN` (not `GITHUB_TOKEN`) as the environment variable name.
