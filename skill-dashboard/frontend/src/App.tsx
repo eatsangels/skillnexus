@@ -58,19 +58,29 @@ export default function App() {
   const [syncToast, setSyncToast] = useState<{ show: boolean; message: string } | null>(null);
 
   const reloadData = (isAuto = false) => {
-    Promise.all([fetchSkills(), fetchAgents(), fetchDashboard(), fetchSkillsSh()]).then(
-      ([s, a, d, sh]) => {
-        setSkills(s.skills);
-        setAgents(a.agents);
-        setStats(d.stats);
-        setSkillsSh(sh.skills);
+    // 1. Fetch local data first (very fast, doesn't require internet / external calls)
+    Promise.all([fetchSkills(), fetchAgents(), fetchDashboard()]).then(
+      ([s, a, d]) => {
+        setSkills(s.skills || []);
+        setAgents(a.agents || []);
+        setStats(d.stats || null);
         setLoading(false);
         if (isAuto) {
           setSyncToast({ show: true, message: "¡Sincronizado en tiempo real!" });
           setTimeout(() => setSyncToast(null), 3000);
         }
       }
-    );
+    ).catch((err) => {
+      console.error("Failed to load local dashboard data:", err);
+      setLoading(false);
+    });
+
+    // 2. Fetch remote skills-sh catalog asynchronously in the background
+    fetchSkillsSh().then((sh) => {
+      setSkillsSh(sh.skills || []);
+    }).catch((err) => {
+      console.error("Failed to load skills.sh catalog:", err);
+    });
   };
 
   useEffect(() => {

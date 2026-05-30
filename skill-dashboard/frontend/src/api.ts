@@ -68,8 +68,14 @@ export interface DashboardStats {
 }
 
 export async function fetchSkills(): Promise<{ skills: SkillSummary[]; total: number }> {
-  const res = await fetch(`${BASE}/skills`);
-  return res.json();
+  try {
+    const res = await fetch(`${BASE}/skills`);
+    if (!res.ok) return { skills: [], total: 0 };
+    return await res.json();
+  } catch (err) {
+    console.error("Error fetching skills:", err);
+    return { skills: [], total: 0 };
+  }
 }
 
 export async function fetchSkill(name: string): Promise<{ skill: SkillDetail }> {
@@ -78,8 +84,14 @@ export async function fetchSkill(name: string): Promise<{ skill: SkillDetail }> 
 }
 
 export async function fetchAgents(): Promise<{ agents: AgentSummary[]; total: number }> {
-  const res = await fetch(`${BASE}/agents`);
-  return res.json();
+  try {
+    const res = await fetch(`${BASE}/agents`);
+    if (!res.ok) return { agents: [], total: 0 };
+    return await res.json();
+  } catch (err) {
+    console.error("Error fetching agents:", err);
+    return { agents: [], total: 0 };
+  }
 }
 
 export async function fetchAgent(name: string): Promise<{ agent: AgentDetail }> {
@@ -88,8 +100,25 @@ export async function fetchAgent(name: string): Promise<{ agent: AgentDetail }> 
 }
 
 export async function fetchDashboard(): Promise<{ stats: DashboardStats }> {
-  const res = await fetch(`${BASE}/dashboard`);
-  return res.json();
+  try {
+    const res = await fetch(`${BASE}/dashboard`);
+    if (!res.ok) throw new Error("Dashboard API returned not OK");
+    return await res.json();
+  } catch (err) {
+    console.error("Error fetching dashboard stats:", err);
+    return {
+      stats: {
+        totalSkills: 0,
+        totalAgents: 0,
+        frameworks: [],
+        nativeAgents: 0,
+        customAgents: 0,
+        agentsByMode: {},
+        agentsByCategory: {},
+        skillFormats: { directory: 0, zip: 0 }
+      }
+    };
+  }
 }
 
 export interface SkillsShSkill {
@@ -119,13 +148,25 @@ export interface SkillsShDetail {
 }
 
 export async function fetchSkillsSh(): Promise<{ skills: SkillsShSkill[]; total: number }> {
-  const res = await fetch(`${BASE}/skills-sh`);
-  return res.json();
+  try {
+    const res = await fetch(`${BASE}/skills-sh`);
+    if (!res.ok) return { skills: [], total: 0 };
+    return await res.json();
+  } catch (err) {
+    console.error("Error fetching skills-sh:", err);
+    return { skills: [], total: 0 };
+  }
 }
 
 export async function searchSkillsSh(q: string): Promise<{ skills: SkillsShSkill[]; count: number }> {
-  const res = await fetch(`${BASE}/skills-sh/search?q=${encodeURIComponent(q)}`);
-  return res.json();
+  try {
+    const res = await fetch(`${BASE}/skills-sh/search?q=${encodeURIComponent(q)}`);
+    if (!res.ok) return { skills: [], count: 0 };
+    return await res.json();
+  } catch (err) {
+    console.error("Error searching skills-sh:", err);
+    return { skills: [], count: 0 };
+  }
 }
 
 export async function fetchSkillsShDetail(source: string, slug: string): Promise<{ skill: SkillsShDetail }> {
