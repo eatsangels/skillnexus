@@ -59,7 +59,7 @@ export default function App() {
   const [syncToast, setSyncToast] = useState<{ show: boolean; message: string } | null>(null);
 
   // Dynamic version and auto-updater state
-  const [version, setVersion] = useState("1.0.6");
+  const [version, setVersion] = useState("1.0.7");
   const [updateState, setUpdateState] = useState<{ status: string; version?: string | null; error?: string | null }>({ status: "idle" });
   const [showHelp, setShowHelp] = useState(false);
   const [hideUpdateBanner, setHideUpdateBanner] = useState(false);

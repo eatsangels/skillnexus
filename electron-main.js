@@ -11,10 +11,18 @@ function startBackend() {
   const backendPath = app.isPackaged
     ? path.join(process.resourcesPath, "app.asar.unpacked", "skill-dashboard", "backend", "src", "server.js")
     : path.join(__dirname, "skill-dashboard", "backend", "src", "server.js");
-  
+  // Define NODE_PATH for packaged app so it resolves root node_modules inside app.asar
+  const nodeModulesPath = app.isPackaged
+    ? path.join(process.resourcesPath, "app.asar", "node_modules")
+    : path.join(__dirname, "node_modules");
+
   // Fork the backend process so it runs in a background Node process
   backendProcess = fork(backendPath, [], {
-    env: { ...process.env, PORT: 3001 },
+    env: { 
+      ...process.env, 
+      PORT: 3001,
+      NODE_PATH: nodeModulesPath
+    },
     stdio: "inherit" // Forward console logs to Electron terminal
   });
 
