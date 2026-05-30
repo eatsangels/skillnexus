@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import type { SystemPaths } from "../api";
 
 interface Props {
+  systemPaths: SystemPaths | null;
   onClose: () => void;
 }
 
-export default function HelpModal({ onClose }: Props) {
+export default function HelpModal({ systemPaths, onClose }: Props) {
   const [lang, setLang] = useState<"en" | "es">(() => {
     const saved = localStorage.getItem("agent-modal-lang");
     return saved === "en" || saved === "es" ? saved : "es";
@@ -22,6 +24,10 @@ export default function HelpModal({ onClose }: Props) {
     return () => window.removeEventListener("keydown", handleKey);
   }, [onClose]);
 
+  const skillsPath = systemPaths?.skillsDir || "C:\\Users\\EaTsAngels\\Documents\\curso-opencode\\.opencode\\skills";
+  const projectRootPath = systemPaths?.projectRoot || "C:\\ID_Skills";
+  const backendDirPath = systemPaths?.backendDir || "C:\\ID_Skills\\skill-dashboard\\backend";
+
   const content = {
     es: {
       title: "Centro de Ayuda - SkillNexus",
@@ -37,9 +43,9 @@ export default function HelpModal({ onClose }: Props) {
         { key: "Ctrl + F", desc: "Enfocar la barra de búsqueda de agentes/skills." },
       ],
       paths: [
-        { name: "Directorio de Skills", path: "C:\\Users\\EaTsAngels\\Documents\\curso-opencode\\.opencode\\skills" },
-        { name: "Raíz del Proyecto", path: "C:\\ID_Skills" },
-        { name: "Dashboard Backend", path: "C:\\ID_Skills\\skill-dashboard\\backend" },
+        { name: "Directorio de Skills", path: skillsPath },
+        { name: "Raíz del Proyecto", path: projectRootPath },
+        { name: "Dashboard Backend", path: backendDirPath },
       ],
       supportTitle: "Contacto y Soporte",
       supportDesc: "Si tienes alguna sugerencia de diseño, encuentras algún error o deseas colaborar, puedes comunicarte directamente con el desarrollador o visitar su portafolio.",
@@ -60,9 +66,9 @@ export default function HelpModal({ onClose }: Props) {
         { key: "Ctrl + F", desc: "Focus search bar." },
       ],
       paths: [
-        { name: "Skills Directory", path: "C:\\Users\\EaTsAngels\\Documents\\curso-opencode\\.opencode\\skills" },
-        { name: "Workspace Root", path: "C:\\ID_Skills" },
-        { name: "Dashboard Backend", path: "C:\\ID_Skills\\skill-dashboard\\backend" },
+        { name: "Skills Directory", path: skillsPath },
+        { name: "Workspace Root", path: projectRootPath },
+        { name: "Dashboard Backend", path: backendDirPath },
       ],
       supportTitle: "Contact & Support",
       supportDesc: "If you have design suggestions, find bugs, or want to collaborate, feel free to contact the developer directly or visit his personal website.",

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { SkillSummary, AgentSummary, DashboardStats, SkillsShSkill } from "./api";
+import type { SkillSummary, AgentSummary, DashboardStats, SkillsShSkill, SystemPaths } from "./api";
 import { fetchSkills, fetchAgents, fetchDashboard, fetchSkillsSh, BASE } from "./api";
 import StatsHeader from "./components/StatsHeader.tsx";
 import TabNav from "./components/TabNav.tsx";
@@ -57,6 +57,7 @@ export default function App() {
   const [selectedSkillsSh, setSelectedSkillsSh] = useState<SkillsShSkill | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncToast, setSyncToast] = useState<{ show: boolean; message: string } | null>(null);
+  const [systemPaths, setSystemPaths] = useState<SystemPaths | null>(null);
 
   // Dynamic version and auto-updater state
   const [version, setVersion] = useState("1.0.7");
@@ -74,6 +75,7 @@ export default function App() {
         setStats(d.stats || null);
         if (d.version) setVersion(d.version);
         if (d.update) setUpdateState(d.update);
+        if (d.systemPaths) setSystemPaths(d.systemPaths);
         setLoading(false);
         if (isAuto) {
           setSyncToast({ show: true, message: "¡Sincronizado en tiempo real!" });
@@ -433,7 +435,7 @@ export default function App() {
         <SkillsShModal skill={selectedSkillsSh} onClose={() => setSelectedSkillsSh(null)} />
       )}
       {showHelp && (
-        <HelpModal onClose={() => setShowHelp(false)} />
+        <HelpModal systemPaths={systemPaths} onClose={() => setShowHelp(false)} />
       )}
 
       {/* Floating downloaded update banner */}

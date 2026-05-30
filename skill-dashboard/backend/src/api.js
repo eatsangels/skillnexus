@@ -203,6 +203,11 @@ router.get("/dashboard", (_req, res) => {
     version: appVersion,
     update: updateStatus,
     lastScan,
+    systemPaths: {
+      skillsDir: CONFIG.scanPaths.skillDirectories[0] || "",
+      projectRoot: join(__dirname, "..", "..", ".."),
+      backendDir: join(__dirname, "..")
+    }
   });
 });
 

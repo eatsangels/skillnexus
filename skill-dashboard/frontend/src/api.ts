@@ -98,8 +98,13 @@ export async function fetchAgent(name: string): Promise<{ agent: AgentDetail }> 
   const res = await fetch(`${BASE}/agents/${encodeURIComponent(name)}`);
   return res.json();
 }
+export interface SystemPaths {
+  skillsDir: string;
+  projectRoot: string;
+  backendDir: string;
+}
 
-export async function fetchDashboard(): Promise<{ stats: DashboardStats; version?: string; update?: { status: string; version?: string | null; error?: string | null } }> {
+export async function fetchDashboard(): Promise<{ stats: DashboardStats; version?: string; update?: { status: string; version?: string | null; error?: string | null }; systemPaths?: SystemPaths }> {
   try {
     const res = await fetch(`${BASE}/dashboard`);
     if (!res.ok) throw new Error("Dashboard API returned not OK");
