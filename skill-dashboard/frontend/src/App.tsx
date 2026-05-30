@@ -10,8 +10,9 @@ import AgentModal from "./components/AgentModal.tsx";
 import SkillsShCard from "./components/SkillsShCard.tsx";
 import SkillsShModal from "./components/SkillsShModal.tsx";
 import HelpModal from "./components/HelpModal.tsx";
+import VideoStudio from "./components/VideoStudio.tsx";
 
-type Tab = "skills" | "agents" | "skills-sh";
+type Tab = "skills" | "agents" | "skills-sh" | "video";
 type ViewMode = "all" | "grouped";
 
 const CATEGORY_ORDER = [
@@ -240,96 +241,101 @@ export default function App() {
         <div className="bg-surface-950/80 backdrop-blur-sm rounded-2xl border border-surface-800/60 p-5 mb-8">
           <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4">
             <TabNav tab={tab} onTabChange={setTab} />
-            <div className="flex-1 relative w-full">
-              <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-500 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                type="text"
-                placeholder="Search agents and skills..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full bg-surface-900 border border-surface-700/50 rounded-xl pl-10 pr-4 py-2.5 text-sm text-surface-100 placeholder-surface-500 focus:outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/20 transition-all duration-200"
-              />
-            </div>
-            {tab === "skills" && allFrameworks.length > 0 && (
-              <select
-                value={frameworkFilter}
-                onChange={(e) => setFrameworkFilter(e.target.value)}
-                className="bg-surface-900 border border-surface-700/50 rounded-xl px-4 py-2.5 text-sm text-surface-200 focus:outline-none focus:border-brand-500/50 cursor-pointer appearance-none min-w-[140px]"
-              >
-                <option value="">All frameworks</option>
-                {allFrameworks.map((f) => (
-                  <option key={f} value={f}>{f}</option>
-                ))}
-              </select>
-            )}
-            {tab === "skills-sh" && (
+            {tab !== "video" && (
               <>
-                {allSkillsShCategories.length > 0 && (
+                <div className="flex-1 relative w-full">
+                  <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-500 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <input
+                    type="text"
+                    placeholder="Search agents and skills..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="w-full bg-surface-900 border border-surface-700/50 rounded-xl pl-10 pr-4 py-2.5 text-sm text-surface-100 placeholder-surface-500 focus:outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/20 transition-all duration-200"
+                  />
+                </div>
+                {tab === "skills" && allFrameworks.length > 0 && (
                   <select
-                    value={skillsShCategoryFilter}
-                    onChange={(e) => setSkillsShCategoryFilter(e.target.value)}
-                    className="bg-surface-900 border border-surface-700/50 rounded-xl px-4 py-2.5 text-sm text-surface-200 focus:outline-none focus:border-brand-500/50 cursor-pointer appearance-none min-w-[150px]"
+                    value={frameworkFilter}
+                    onChange={(e) => setFrameworkFilter(e.target.value)}
+                    className="bg-surface-900 border border-surface-700/50 rounded-xl px-4 py-2.5 text-sm text-surface-200 focus:outline-none focus:border-brand-500/50 cursor-pointer appearance-none min-w-[140px]"
                   >
-                    <option value="">All categories</option>
-                    {allSkillsShCategories.map((c) => (
-                      <option key={c} value={c}>{c}</option>
+                    <option value="">All frameworks</option>
+                    {allFrameworks.map((f) => (
+                      <option key={f} value={f}>{f}</option>
                     ))}
                   </select>
                 )}
-                {allSources.length > 0 && (
-                  <select
-                    value={sourceFilter}
-                    onChange={(e) => setSourceFilter(e.target.value)}
-                    className="bg-surface-900 border border-surface-700/50 rounded-xl px-4 py-2.5 text-sm text-surface-200 focus:outline-none focus:border-brand-500/50 cursor-pointer appearance-none min-w-[200px]"
-                  >
-                    <option value="">All sources</option>
-                    {allSources.map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
+                {tab === "skills-sh" && (
+                  <>
+                    {allSkillsShCategories.length > 0 && (
+                      <select
+                        value={skillsShCategoryFilter}
+                        onChange={(e) => setSkillsShCategoryFilter(e.target.value)}
+                        className="bg-surface-900 border border-surface-700/50 rounded-xl px-4 py-2.5 text-sm text-surface-200 focus:outline-none focus:border-brand-500/50 cursor-pointer appearance-none min-w-[150px]"
+                      >
+                        <option value="">All categories</option>
+                        {allSkillsShCategories.map((c) => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </select>
+                    )}
+                    {allSources.length > 0 && (
+                      <select
+                        value={sourceFilter}
+                        onChange={(e) => setSourceFilter(e.target.value)}
+                        className="bg-surface-900 border border-surface-700/50 rounded-xl px-4 py-2.5 text-sm text-surface-200 focus:outline-none focus:border-brand-500/50 cursor-pointer appearance-none min-w-[200px]"
+                      >
+                        <option value="">All sources</option>
+                        {allSources.map((s) => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                    )}
+                    <button
+                      onClick={() => setSkillsShView(skillsShView === "all" ? "grouped" : "all")}
+                      className="px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 bg-surface-800/50 hover:bg-surface-700/50 text-surface-300 hover:text-surface-100 border border-surface-700/30 hover:border-surface-600/50 cursor-pointer whitespace-nowrap"
+                    >
+                      {skillsShView === "all" ? "Group by category" : "Show all"}
+                    </button>
+                  </>
                 )}
-                <button
-                  onClick={() => setSkillsShView(skillsShView === "all" ? "grouped" : "all")}
-                  className="px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 bg-surface-800/50 hover:bg-surface-700/50 text-surface-300 hover:text-surface-100 border border-surface-700/30 hover:border-surface-600/50 cursor-pointer whitespace-nowrap"
-                >
-                  {skillsShView === "all" ? "Group by category" : "Show all"}
-                </button>
-              </>
-            )}
-            {tab === "agents" && (
-              <>
-                <select
-                  value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="bg-surface-900 border border-surface-700/50 rounded-xl px-4 py-2.5 text-sm text-surface-200 focus:outline-none focus:border-brand-500/50 cursor-pointer appearance-none min-w-[150px]"
-                >
-                  <option value="">All categories</option>
-                  {allCategories.map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-                <select
-                  value={modeFilter}
-                  onChange={(e) => setModeFilter(e.target.value)}
-                  className="bg-surface-900 border border-surface-700/50 rounded-xl px-4 py-2.5 text-sm text-surface-200 focus:outline-none focus:border-brand-500/50 cursor-pointer appearance-none min-w-[130px]"
-                >
-                  <option value="">All modes</option>
-                  {allModes.map((m) => (
-                    <option key={m} value={m}>{m}</option>
-                  ))}
-                </select>
-                <button
-                  onClick={() => setView(view === "all" ? "grouped" : "all")}
-                  className="px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 bg-surface-800/50 hover:bg-surface-700/50 text-surface-300 hover:text-surface-100 border border-surface-700/30 hover:border-surface-600/50 cursor-pointer whitespace-nowrap"
-                >
-                  {view === "all" ? "Group by category" : "Show all"}
-                </button>
+                {tab === "agents" && (
+                  <>
+                    <select
+                      value={categoryFilter}
+                      onChange={(e) => setCategoryFilter(e.target.value)}
+                      className="bg-surface-900 border border-surface-700/50 rounded-xl px-4 py-2.5 text-sm text-surface-200 focus:outline-none focus:border-brand-500/50 cursor-pointer appearance-none min-w-[150px]"
+                    >
+                      <option value="">All categories</option>
+                      {allCategories.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={modeFilter}
+                      onChange={(e) => setModeFilter(e.target.value)}
+                      className="bg-surface-900 border border-surface-700/50 rounded-xl px-4 py-2.5 text-sm text-surface-200 focus:outline-none focus:border-brand-500/50 cursor-pointer appearance-none min-w-[130px]"
+                    >
+                      <option value="">All modes</option>
+                      {allModes.map((m) => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => setView(view === "all" ? "grouped" : "all")}
+                      className="px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 bg-surface-800/50 hover:bg-surface-700/50 text-surface-300 hover:text-surface-100 border border-surface-700/30 hover:border-surface-600/50 cursor-pointer whitespace-nowrap"
+                    >
+                      {view === "all" ? "Group by category" : "Show all"}
+                    </button>
+                  </>
+                )}
               </>
             )}
           </div>
         </div>
+
 
         {tab === "skills" && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -429,6 +435,10 @@ export default function App() {
               </div>
             )}
           </div>
+        )}
+
+        {tab === "video" && (
+          <VideoStudio base={BASE} />
         )}
       </div>
 

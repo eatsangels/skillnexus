@@ -26,3 +26,12 @@ logs/
 # Temporary agent playground runs
 playground_cwd/
 **/playground_cwd/
+
+# Remotion workspace (archivos generados automáticamente)
+.temp_remotion/
+
+# Binarios locales
+.bin/
+
+# Videos renderizados
+*.mp4

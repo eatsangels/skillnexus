@@ -1,12 +1,13 @@
 interface Props {
-  tab: "skills" | "agents" | "skills-sh";
-  onTabChange: (tab: "skills" | "agents" | "skills-sh") => void;
+  tab: "skills" | "agents" | "skills-sh" | "video";
+  onTabChange: (tab: "skills" | "agents" | "skills-sh" | "video") => void;
 }
 
 const tabs = [
-  { id: "skills" as const, label: "Skills", icon: "S" },
-  { id: "agents" as const, label: "Agents", icon: "A" },
-  { id: "skills-sh" as const, label: "Skills.sh", icon: "~" },
+  { id: "agents" as const, label: "Agents" },
+  { id: "skills" as const, label: "Skills" },
+  { id: "skills-sh" as const, label: "Skills.sh" },
+  { id: "video" as const, label: "Video Studio" },
 ];
 
 export default function TabNav({ tab, onTabChange }: Props) {
