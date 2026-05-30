@@ -379,6 +379,27 @@ export default function App() {
         <SkillsShModal skill={selectedSkillsSh} onClose={() => setSelectedSkillsSh(null)} />
       )}
 
+      {/* Footer */}
+      <footer className="mt-20 border-t border-surface-800/40 py-8 text-center text-xs text-surface-500">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p>© {new Date().getFullYear()} SkillNexus. Todos los derechos reservados.</p>
+          <p className="flex items-center gap-1.5">
+            <span>Creado con ❤️ por</span>
+            <a
+              href="https://etrinidad.netlify.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-brand-400 hover:text-brand-300 transition-all duration-200 hover:underline inline-flex items-center gap-0.5"
+            >
+              Edward Trinidad
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.6} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
+          </p>
+        </div>
+      </footer>
+
       {syncToast?.show && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 bg-surface-900/90 backdrop-blur-md border border-brand-500/30 rounded-xl shadow-[0_0_20px_rgba(92,124,250,0.2)] text-brand-200 text-sm font-medium animate-fade-in">
           <span className="w-2.5 h-2.5 rounded-full bg-brand-500 animate-ping" />

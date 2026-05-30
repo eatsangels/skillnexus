@@ -1,7 +1,7 @@
 {
-  "name": "id_skills-desktop",
+  "name": "skillnexus-desktop",
   "version": "1.0.1",
-  "description": "Desktop version of Skill & Agent Dashboard",
+  "description": "Desktop version of SkillNexus Dashboard",
   "main": "electron-main.js",
   "repository": {
     "type": "git",
@@ -12,7 +12,7 @@
     "dev:web": "powershell -File ./skill-dashboard/start.ps1",
     "dev:electron": "concurrently \"node skill-dashboard/backend/src/server.js\" \"npm --prefix skill-dashboard/frontend run dev\" \"wait-on http://localhost:5173 && cross-env ELECTRON_DEV=true electron .\"",
     "build:frontend": "npm --prefix skill-dashboard/frontend run build",
-    "package:dir": "npm run build:frontend && electron-packager . \"ID Skills Dashboard\" --platform=win32 --arch=x64 --out=dist-desktop --overwrite",
+    "package:dir": "npm run build:frontend && electron-packager . \"SkillNexus\" --platform=win32 --arch=x64 --out=dist-desktop --overwrite --icon=skill-dashboard/frontend/public/logo.png",
     "package:dist": "npm run build:frontend && electron-builder"
   },
   "devDependencies": {
@@ -27,8 +27,8 @@
     "electron-updater": "^6.1.7"
   },
   "build": {
-    "appId": "com.eatsangels.idskills",
-    "productName": "ID Skills Dashboard",
+    "appId": "com.eatsangels.skillnexus",
+    "productName": "SkillNexus",
     "directories": {
       "output": "dist-desktop"
     },
@@ -44,14 +44,14 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "skill-dashboard/frontend/public/favicon.ico"
+      "icon": "skill-dashboard/frontend/public/logo.png"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "ID Skills Dashboard"
+      "shortcutName": "SkillNexus"
     },
     "publish": {
       "provider": "github",

@@ -1,4 +1,4 @@
-# id_skills: Local panel to install, test, and manage agent skills
+# SkillNexus: Local panel to install, test, and manage agent skills
 
 <!-- README-I18N:START -->
 

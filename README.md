@@ -1,4 +1,4 @@
-# id_skills: Panel local para instalar, probar y gestionar habilidades de agentes
+# SkillNexus: Panel local para instalar, probar y gestionar habilidades de agentes
 
 <!-- README-I18N:START -->
 

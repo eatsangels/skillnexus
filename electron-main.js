@@ -24,6 +24,10 @@ function startBackend() {
 }
 
 function createWindow() {
+  const iconPath = app.isPackaged
+    ? path.join(__dirname, "skill-dashboard", "frontend", "dist", "logo.png")
+    : path.join(__dirname, "skill-dashboard", "frontend", "public", "logo.png");
+
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
@@ -31,8 +35,18 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
     },
-    title: "ID Skills Dashboard",
+    title: "SkillNexus",
+    icon: iconPath,
     backgroundColor: "#05070b", // Match brandkit canvas background
+  });
+
+  // Open external links in the user's default system browser
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith("http:") || url.startsWith("https:")) {
+      require("electron").shell.openExternal(url);
+      return { action: "deny" };
+    }
+    return { action: "allow" };
   });
 
   // Check if we are in development mode
