@@ -4,6 +4,9 @@ interface Props {
   stats: DashboardStats | null;
   version: string;
   onHelpClick: () => void;
+  updateState?: { status: string; version?: string | null; error?: string | null } | null;
+  applyingUpdate?: boolean;
+  onApplyUpdate?: () => void;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -23,10 +26,15 @@ const CATEGORY_COLORS: Record<string, string> = {
   "Mobile/XR": "from-fuchsia-500 to-fuchsia-700",
 };
 
-export default function StatsHeader({ stats, version, onHelpClick }: Props) {
-  if (!stats) return null;
-
-  const topCategories = stats.agentsByCategory
+export default function StatsHeader({
+  stats,
+  version,
+  onHelpClick,
+  updateState,
+  applyingUpdate,
+  onApplyUpdate,
+}: Props) {
+  const topCategories = stats?.agentsByCategory
     ? Object.entries(stats.agentsByCategory)
         .filter(([, count]) => count > 0)
         .sort(([, a], [, b]) => b - a)
@@ -43,13 +51,46 @@ export default function StatsHeader({ stats, version, onHelpClick }: Props) {
             className="w-12 h-12 object-contain rounded-xl shadow-[0_0_20px_rgba(124,58,237,0.3)] border border-brand-500/20"
           />
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5 flex-wrap">
               <h1 className="text-2xl font-extrabold text-surface-100 tracking-tight">
                 SkillNexus
               </h1>
-              <span className="text-[10px] bg-brand-500/10 text-brand-400 border border-brand-500/20 font-bold px-2 py-0.5 rounded-full shrink-0">
+              <span className="text-[10px] bg-brand-500/10 text-brand-400 border border-brand-500/20 font-bold px-2.5 py-0.5 rounded-full shrink-0">
                 v{version}
               </span>
+
+              {/* Botón de actualización destacado en el Header */}
+              {updateState && updateState.status === "downloaded" && (
+                <button
+                  onClick={onApplyUpdate}
+                  disabled={applyingUpdate}
+                  className="animate-pulse bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 disabled:opacity-50 text-white text-[10px] font-extrabold px-3 py-1 rounded-full border border-violet-400/20 shadow-lg shadow-violet-600/30 flex items-center gap-1.5 cursor-pointer transition-all duration-200 hover:scale-105"
+                >
+                  {applyingUpdate ? (
+                    <>
+                      <div className="w-2.5 h-2.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Instalando...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      </svg>
+                      Actualizar a v{updateState.version}
+                    </>
+                  )}
+                </button>
+              )}
+
+              {updateState && updateState.status === "available" && (
+                <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1.5 animate-pulse">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
+                  </span>
+                  Descargando v{updateState.version}...
+                </span>
+              )}
             </div>
             <p className="text-surface-500 text-xs mt-0.5">
               Entorno inteligente de gestión para agentes y habilidades
@@ -84,67 +125,71 @@ export default function StatsHeader({ stats, version, onHelpClick }: Props) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-        <div className="bg-gradient-to-br from-violet-600/10 to-violet-900/5 border border-violet-500/15 rounded-2xl p-4">
-          <div className="flex items-baseline gap-1.5 mb-1">
-            <span className="text-2xl font-bold text-violet-300">{stats.totalSkills}</span>
-            <span className="text-xs font-medium text-surface-500 uppercase tracking-wider">Skills</span>
-          </div>
-          {stats.totalSkills > 0 && (
-            <div className="flex gap-2 text-[11px] text-surface-500">
-              <span className="bg-surface-900/50 px-2 py-0.5 rounded-full">{stats.skillFormats.directory} dir</span>
-              <span className="bg-surface-900/50 px-2 py-0.5 rounded-full">{stats.skillFormats.zip} zip</span>
+      {stats && (
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="bg-gradient-to-br from-violet-600/10 to-violet-900/5 border border-violet-500/15 rounded-2xl p-4">
+              <div className="flex items-baseline gap-1.5 mb-1">
+                <span className="text-2xl font-bold text-violet-300">{stats.totalSkills}</span>
+                <span className="text-xs font-medium text-surface-500 uppercase tracking-wider">Skills</span>
+              </div>
+              {stats.totalSkills > 0 && (
+                <div className="flex gap-2 text-[11px] text-surface-500">
+                  <span className="bg-surface-900/50 px-2 py-0.5 rounded-full">{stats.skillFormats.directory} dir</span>
+                  <span className="bg-surface-900/50 px-2 py-0.5 rounded-full">{stats.skillFormats.zip} zip</span>
+                </div>
+              )}
             </div>
-          )}
-        </div>
 
-        <div className="bg-gradient-to-br from-emerald-600/10 to-emerald-900/5 border border-emerald-500/15 rounded-2xl p-4">
-          <div className="flex items-baseline gap-1.5 mb-1">
-            <span className="text-2xl font-bold text-emerald-300">{stats.totalAgents}</span>
-            <span className="text-xs font-medium text-surface-500 uppercase tracking-wider">Agents</span>
-          </div>
-          {stats.totalAgents > 0 && (
-            <div className="flex gap-2 text-[11px] text-surface-500">
-              <span className="bg-surface-900/50 px-2 py-0.5 rounded-full">{stats.nativeAgents} built-in</span>
-              <span className="bg-surface-900/50 px-2 py-0.5 rounded-full">{stats.customAgents} custom</span>
+            <div className="bg-gradient-to-br from-emerald-600/10 to-emerald-900/5 border border-emerald-500/15 rounded-2xl p-4">
+              <div className="flex items-baseline gap-1.5 mb-1">
+                <span className="text-2xl font-bold text-emerald-300">{stats.totalAgents}</span>
+                <span className="text-xs font-medium text-surface-500 uppercase tracking-wider">Agents</span>
+              </div>
+              {stats.totalAgents > 0 && (
+                <div className="flex gap-2 text-[11px] text-surface-500">
+                  <span className="bg-surface-900/50 px-2 py-0.5 rounded-full">{stats.nativeAgents} built-in</span>
+                  <span className="bg-surface-900/50 px-2 py-0.5 rounded-full">{stats.customAgents} custom</span>
+                </div>
+              )}
             </div>
-          )}
-        </div>
 
-        {stats.frameworks.length > 0 && (
-          <div className="bg-gradient-to-br from-amber-600/10 to-amber-900/5 border border-amber-500/15 rounded-2xl p-4">
-            <div className="flex items-baseline gap-1.5 mb-1">
-              <span className="text-2xl font-bold text-amber-300">{stats.frameworks.length}</span>
-              <span className="text-xs font-medium text-surface-500 uppercase tracking-wider">Frameworks</span>
-            </div>
-            <div className="flex flex-wrap gap-1 mt-1.5">
-              {stats.frameworks.slice(0, 4).map((f) => (
-                <span key={f} className="text-[10px] bg-surface-900/50 text-surface-400 px-1.5 py-0.5 rounded-full">{f}</span>
+            {stats.frameworks.length > 0 && (
+              <div className="bg-gradient-to-br from-amber-600/10 to-amber-900/5 border border-amber-500/15 rounded-2xl p-4">
+                <div className="flex items-baseline gap-1.5 mb-1">
+                  <span className="text-2xl font-bold text-amber-300">{stats.frameworks.length}</span>
+                  <span className="text-xs font-medium text-surface-500 uppercase tracking-wider">Frameworks</span>
+                </div>
+                <div className="flex flex-wrap gap-1 mt-1.5">
+                  {stats.frameworks.slice(0, 4).map((f) => (
+                    <span key={f} className="text-[10px] bg-surface-900/50 text-surface-400 px-1.5 py-0.5 rounded-full">{f}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {Object.entries(stats.agentsByMode || {}).map(([mode, count]) => (
+              <div key={mode} className="bg-gradient-to-br from-blue-600/10 to-blue-900/5 border border-blue-500/15 rounded-2xl p-4">
+                <div className="flex items-baseline gap-1.5 mb-1">
+                  <span className="text-2xl font-bold text-blue-300">{count}</span>
+                  <span className="text-xs font-medium text-surface-500 uppercase tracking-wider capitalize">{mode}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {topCategories.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-4">
+              {topCategories.map(([cat, count]) => (
+                <div key={cat} className="flex items-center gap-2 bg-surface-900/50 border border-surface-800/50 rounded-xl px-3.5 py-2">
+                  <div className={`w-2 h-2 rounded-full bg-gradient-to-br ${CATEGORY_COLORS[cat] || "from-surface-500 to-surface-600"}`} />
+                  <span className="text-xs font-medium text-surface-300">{cat}</span>
+                  <span className="text-xs text-surface-500">{count}</span>
+                </div>
               ))}
             </div>
-          </div>
-        )}
-
-        {Object.entries(stats.agentsByMode || {}).map(([mode, count]) => (
-          <div key={mode} className="bg-gradient-to-br from-blue-600/10 to-blue-900/5 border border-blue-500/15 rounded-2xl p-4">
-            <div className="flex items-baseline gap-1.5 mb-1">
-              <span className="text-2xl font-bold text-blue-300">{count}</span>
-              <span className="text-xs font-medium text-surface-500 uppercase tracking-wider capitalize">{mode}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {topCategories.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-4">
-          {topCategories.map(([cat, count]) => (
-            <div key={cat} className="flex items-center gap-2 bg-surface-900/50 border border-surface-800/50 rounded-xl px-3.5 py-2">
-              <div className={`w-2 h-2 rounded-full bg-gradient-to-br ${CATEGORY_COLORS[cat] || "from-surface-500 to-surface-600"}`} />
-              <span className="text-xs font-medium text-surface-300">{cat}</span>
-              <span className="text-xs text-surface-500">{count}</span>
-            </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   );

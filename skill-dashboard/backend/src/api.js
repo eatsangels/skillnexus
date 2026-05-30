@@ -13,7 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Read app version from package.json dynamically
-let appVersion = "1.0.8";
+let appVersion = "1.0.9";
 try {
   let pkgPath = join(__dirname, "..", "..", "..", "package.json");
   if (!existsSync(pkgPath)) {

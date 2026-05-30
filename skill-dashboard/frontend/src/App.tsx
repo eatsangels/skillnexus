@@ -228,7 +228,14 @@ export default function App() {
         </div>
       )}
       <div className="max-w-7xl mx-auto px-6 py-8">
-        <StatsHeader stats={stats} version={version} onHelpClick={() => setShowHelp(true)} />
+        <StatsHeader
+          stats={stats}
+          version={version}
+          onHelpClick={() => setShowHelp(true)}
+          updateState={updateState}
+          applyingUpdate={applyingUpdate}
+          onApplyUpdate={handleApplyUpdate}
+        />
 
         <div className="bg-surface-950/80 backdrop-blur-sm rounded-2xl border border-surface-800/60 p-5 mb-8">
           <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4">
