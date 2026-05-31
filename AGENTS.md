@@ -72,7 +72,7 @@ id_skills/
 *   It installs all dependencies, builds the frontend, and runs `electron-builder --win --publish always`.
 *   The workflow requires `permissions: contents: write` and uses `GH_TOKEN` (not `GITHUB_TOKEN`) for electron-builder.
 *   Artifacts (`.exe`, `.blockmap`, `latest.yml`) are uploaded to GitHub Releases automatically.
-*   **Latest release**: `v1.0.12` — includes Remotion Video Studio, Template Library, robust `skills.sh` parser, and Unicode-safe PowerShell starter.
+*   **Latest release**: `v1.0.13` — includes robust in-app skill/agent directory auto-creation watchers, real-time instant installer UI sync, and nested interactive button validation corrections.
 
 ---
 
