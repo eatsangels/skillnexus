@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import type { SkillSummary, AgentSummary, DashboardStats, SkillsShSkill, SystemPaths, AgentsShAgent } from "./api";
 import { fetchSkills, fetchAgents, fetchDashboard, fetchSkillsSh, fetchAgentsSh, BASE } from "./api";
 import StatsHeader from "./components/StatsHeader.tsx";
@@ -73,6 +73,17 @@ export default function App() {
   const [showHelp, setShowHelp] = useState(false);
   const [hideUpdateBanner, setHideUpdateBanner] = useState(false);
   const [applyingUpdate, setApplyingUpdate] = useState(false);
+  const [mascotEnabled, setMascotEnabled] = useState<boolean>(() => {
+    return localStorage.getItem("nexus-mascot-enabled") !== "false";
+  });
+
+  const toggleMascot = () => {
+    setMascotEnabled((prev) => {
+      const next = !prev;
+      localStorage.setItem("nexus-mascot-enabled", String(next));
+      return next;
+    });
+  };
 
   const reloadData = (isAuto = false) => {
     // 1. Fetch local data first (very fast, doesn't require internet / external calls)
@@ -660,6 +671,314 @@ export default function App() {
           <span>{syncToast.message}</span>
         </div>
       )}
+
+      {/* Mascot Toggle Button — fixed bottom-right corner */}
+      <button
+        id="mascot-toggle-btn"
+        onClick={toggleMascot}
+        title={mascotEnabled ? "Ocultar mascota" : "Mostrar mascota"}
+        className="mascot-toggle-btn"
+      >
+        <span className="mascot-toggle-icon">🐯</span>
+        <span className="mascot-toggle-track">
+          <span className={`mascot-toggle-thumb ${mascotEnabled ? "mascot-toggle-thumb--on" : ""}`} />
+        </span>
+      </button>
+
+      {/* Nexus Tiger Mascot */}
+      {mascotEnabled && <NexusTiger />}
     </div>
   );
 }
+
+interface TransparentVideoProps {
+  src: string;
+  className?: string;
+  onClick?: () => void;
+  onMouseEnter?: () => void;
+}
+
+function TransparentVideo({ src, className, onClick, onMouseEnter }: TransparentVideoProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
+
+    let active = true;
+    const ctx = canvas.getContext("2d");
+
+    const TARGET_HEIGHT = 160; // px — match container size
+
+    const renderFrame = () => {
+      if (!active) return;
+      if (video.paused || video.ended) {
+        requestAnimationFrame(renderFrame);
+        return;
+      }
+
+      const vw = video.videoWidth;
+      const vh = video.videoHeight;
+      if (vw && vh) {
+        // Scale canvas so height = TARGET_HEIGHT, preserving aspect ratio
+        const scale = TARGET_HEIGHT / vh;
+        const w = Math.round(vw * scale);
+        const h = TARGET_HEIGHT;
+
+        if (canvas.width !== w) canvas.width = w;
+        if (canvas.height !== h) canvas.height = h;
+
+        if (ctx) {
+          // Use high-quality downscaling
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = "high";
+          ctx.drawImage(video, 0, 0, w, h);
+          const imgData = ctx.getImageData(0, 0, w, h);
+          const data = imgData.data;
+
+          // Sample background color from top-left pixel (0,0)
+          const bgR = data[0];
+          const bgG = data[1];
+          const bgB = data[2];
+
+          // Key out background color with some tolerance
+          const tolerance = 30;
+          const feather = 8;
+          for (let i = 0; i < data.length; i += 4) {
+            const r = data[i];
+            const g = data[i+1];
+            const b = data[i+2];
+
+            const diffR = Math.abs(r - bgR);
+            const diffG = Math.abs(g - bgG);
+            const diffB = Math.abs(b - bgB);
+
+            const dist = Math.max(diffR, diffG, diffB);
+            if (dist < tolerance) {
+              if (dist < tolerance - feather) {
+                data[i+3] = 0; // Fully transparent
+              } else {
+                // Smooth feathered edge
+                const alphaRatio = (dist - (tolerance - feather)) / feather;
+                data[i+3] = Math.floor(alphaRatio * 255);
+              }
+            }
+          }
+          ctx.putImageData(imgData, 0, 0);
+        }
+      }
+
+      requestAnimationFrame(renderFrame);
+    };
+
+    const handlePlay = () => {
+      requestAnimationFrame(renderFrame);
+    };
+
+    const handleCanPlay = () => {
+      video.play().catch(() => {});
+    };
+
+    video.addEventListener("play", handlePlay);
+    video.addEventListener("canplay", handleCanPlay);
+
+    // Explicitly try playing
+    video.play().catch(() => {});
+
+    // In case video is already playing
+    if (!video.paused) {
+      requestAnimationFrame(renderFrame);
+    }
+
+    return () => {
+      active = false;
+      if (video) {
+        video.removeEventListener("play", handlePlay);
+        video.removeEventListener("canplay", handleCanPlay);
+      }
+    };
+  }, [src]);
+
+  return (
+    <>
+      <video
+        ref={videoRef}
+        src={src}
+        style={{
+          position: "absolute",
+          width: "1px",
+          height: "1px",
+          opacity: 0,
+          pointerEvents: "none",
+          overflow: "hidden",
+          zIndex: -1,
+        }}
+        autoPlay
+        loop
+        muted
+        playsInline
+      />
+      <canvas
+        ref={canvasRef}
+        className={className}
+        onClick={onClick}
+        onMouseEnter={onMouseEnter}
+      />
+    </>
+  );
+}
+
+type BubbleType = "speech" | "thought";
+
+// Animation total duration must match CSS walk-back-and-forth
+const ANIM_DURATION_MS = 22000;
+const ANIM_START = Date.now(); // approximates CSS animation start
+
+function NexusTiger() {
+  const [showBubble, setShowBubble] = useState(false);
+  const [fadingOut, setFadingOut] = useState(false);
+  const [bubbleText, setBubbleText] = useState("");
+  const [bubbleType, setBubbleType] = useState<BubbleType>("speech");
+  // Track tiger's left position (%) in sync with the CSS animation
+  const [tigerLeft, setTigerLeft] = useState(-2);
+
+  // Single interval that tracks both position & direction from animation timing
+  useEffect(() => {
+    const tick = () => {
+      const elapsed = (Date.now() - ANIM_START) % ANIM_DURATION_MS;
+      const p = elapsed / ANIM_DURATION_MS;
+
+      let left: number;
+      if (p < 0.48) {
+        // Walking left → right: -2% to 88%
+        left = -2 + (p / 0.48) * 90;
+      } else if (p < 0.50) {
+        left = 88; // pausing at right end
+      } else if (p < 0.98) {
+        // Walking right → left: 88% to -2%
+        left = 88 - ((p - 0.50) / 0.48) * 90;
+      } else {
+        left = -2; // pausing at left end
+      }
+      setTigerLeft(left);
+    };
+    tick();
+    const id = setInterval(tick, 50); // smooth enough, cheap enough
+    return () => clearInterval(id);
+  }, []);
+
+  const speechPhrases = [
+    "¡Ruge con código! 🐯",
+    "¡Modo Hacker activado! 💻",
+    "¿Listo para crear impacto?",
+    "¡Estilo Neo-Brutalista al 100%! ⭐",
+    "¡Sincronizando habilidades! 🔄",
+    "¡Tigre Nexus en patrulla! 🚀",
+    "¡Ruge con Neo-Brutalis!",
+    "¿Qué skill usaremos hoy? 🛠️",
+    "¡El código no se escribe solo! 💪",
+    "¡Vamos a romperla hoy! 🔥",
+    "¡SkillNexus al poder! ⚡",
+    "¡Ese bug no tiene escapatoria! 🐛",
+  ];
+
+  const thoughtPhrases = [
+    "Hmm... ¿será un bug o una feature? 🤔",
+    "No olvides tomar agua 💧",
+    "Si funciona, no lo toques... 🫣",
+    "Necesito más café ☕",
+    "¿Y si refactorizo todo? 😈",
+    "El README dice que funciona...",
+    "Funciona en mi máquina 🤷",
+    "99 bugs en el código... arreglé uno... 101 bugs 😅",
+    "¿Semicolón o no semicolón? 🧐",
+    "Debería escribir más tests... mañana 😴",
+    "¿Por qué funciona esto? 🤯",
+    "Modo focus: activado 🧠",
+  ];
+
+  const triggerBubble = (type: BubbleType, text: string) => {
+    setFadingOut(false);
+    setBubbleType(type);
+    setBubbleText(text);
+    setShowBubble(true);
+  };
+
+  const handleInteraction = () => {
+    const randomPhrase = speechPhrases[Math.floor(Math.random() * speechPhrases.length)];
+    triggerBubble("speech", randomPhrase);
+  };
+
+  // Hide bubble with fade-out
+  useEffect(() => {
+    if (showBubble) {
+      const fadeTimer = setTimeout(() => setFadingOut(true), 2800);
+      const hideTimer = setTimeout(() => {
+        setShowBubble(false);
+        setFadingOut(false);
+      }, 3200);
+      return () => {
+        clearTimeout(fadeTimer);
+        clearTimeout(hideTimer);
+      };
+    }
+  }, [showBubble]);
+
+  // Auto-trigger bubbles randomly
+  useEffect(() => {
+    const scheduleNext = () => {
+      const delay = 8000 + Math.random() * 10000;
+      return setTimeout(() => {
+        const isThought = Math.random() < 0.4;
+        const pool = isThought ? thoughtPhrases : speechPhrases;
+        const randomPhrase = pool[Math.floor(Math.random() * pool.length)];
+        triggerBubble(isThought ? "thought" : "speech", randomPhrase);
+      }, delay);
+    };
+
+    let timer = scheduleNext();
+    const interval = setInterval(() => {
+      clearTimeout(timer);
+      timer = scheduleNext();
+    }, 3500);
+
+    return () => {
+      clearTimeout(timer);
+      clearInterval(interval);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // The bubble is rendered as position:fixed OUTSIDE the flipped container,
+  // centered above the tiger using the JS-tracked left position.
+  // Container width is 10rem (160px). Center = tigerLeft% + 5rem.
+  const bubbleLeft = `calc(${Math.max(0, Math.min(85, tigerLeft))}% + 5rem)`;
+
+  return (
+    <>
+      <div className="nexus-tiger-container">
+        <div className="nexus-tiger-wrapper">
+          <TransparentVideo
+            src="/Animado.mp4"
+            className="nexus-tiger-image"
+            onClick={handleInteraction}
+            onMouseEnter={handleInteraction}
+          />
+        </div>
+      </div>
+
+      {/* Bubble rendered outside flipped container — text is always readable */}
+      {showBubble && (
+        <div
+          className={`nexus-speech-bubble nexus-speech-bubble--${bubbleType} ${fadingOut ? "nexus-speech-bubble--fade-out" : ""}`}
+          style={{ left: bubbleLeft }}
+        >
+          {bubbleText}
+        </div>
+      )}
+    </>
+  );
+}
+

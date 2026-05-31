@@ -91,7 +91,7 @@ A concrete, specialized stateless function. It performs one task with high relia
 *   It installs all dependencies, builds the frontend, and runs `electron-builder --win --publish always`.
 *   The workflow requires `permissions: contents: write` and uses `GH_TOKEN` (not `GITHUB_TOKEN`) for electron-builder.
 *   Artifacts (`.exe`, `.blockmap`, `latest.yml`) are uploaded to GitHub Releases automatically.
-*   **Latest release**: `v1.0.19` — Migrated the entire dashboard visual identity to a high-impact, custom Neo-Brutalist Pop design system (crisp high-contrast borders, solid shadows, and warm-toned pastel palette).
+*   **Latest release**: `v1.0.20` — Animated tiger mascot (Animado.mp4 + canvas chroma-key), auto speech/thought bubbles with correct text orientation at all walk directions, mascot ON/OFF toggle persisted in localStorage.
 
 ---
 

@@ -33,5 +33,6 @@ playground_cwd/
 # Binarios locales
 .bin/
 
-# Videos renderizados
+# Videos renderizados (excepto assets del mascot en public/)
 *.mp4
+!skill-dashboard/frontend/public/*.mp4
