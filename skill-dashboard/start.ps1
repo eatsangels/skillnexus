@@ -1,7 +1,8 @@
+#Requires -Version 5.1
 <#
 .SYNOPSIS
   SkillNexus - Script de inicio para el modo web (dashboard local)
-  Instala dependencias automáticamente si no están presentes.
+  Instala dependencias automaticamente si no estan presentes.
 #>
 
 $ErrorActionPreference = "Stop"
@@ -9,56 +10,56 @@ $root = $PSScriptRoot
 
 function Write-Step($msg) {
   Write-Host ""
-  Write-Host "  $msg" -ForegroundColor Cyan
+  Write-Host "  >> $msg" -ForegroundColor Cyan
 }
 
 function Write-OK($msg) {
-  Write-Host "  ✔ $msg" -ForegroundColor Green
+  Write-Host "  OK $msg" -ForegroundColor Green
 }
 
 function Write-Warn($msg) {
-  Write-Host "  ⚠ $msg" -ForegroundColor Yellow
+  Write-Host "  !! $msg" -ForegroundColor Yellow
 }
 
-# ─── Banner ────────────────────────────────────────────────────────────────────
+# Banner
 Clear-Host
 Write-Host ""
-Write-Host "  ╔══════════════════════════════════════════╗" -ForegroundColor DarkMagenta
-Write-Host "  ║         SkillNexus  —  Web Mode          ║" -ForegroundColor Magenta
-Write-Host "  ╚══════════════════════════════════════════╝" -ForegroundColor DarkMagenta
+Write-Host "  ============================================" -ForegroundColor DarkMagenta
+Write-Host "       SkillNexus  --  Web Mode              " -ForegroundColor Magenta
+Write-Host "  ============================================" -ForegroundColor DarkMagenta
 Write-Host ""
 
-# ─── Verificar Node.js ─────────────────────────────────────────────────────────
+# Verificar Node.js
 Write-Step "Verificando Node.js..."
 try {
   $nodeVersion = node --version 2>&1
   Write-OK "Node.js $nodeVersion encontrado"
 } catch {
   Write-Host ""
-  Write-Host "  ✘ Node.js no está instalado. Descárgalo desde https://nodejs.org" -ForegroundColor Red
+  Write-Host "  ERROR: Node.js no esta instalado. Descargalo desde https://nodejs.org" -ForegroundColor Red
   Write-Host ""
-  Pause
+  Read-Host "Presiona Enter para salir"
   exit 1
 }
 
-# ─── Instalar dependencias si faltan ──────────────────────────────────────────
+# Instalar dependencias si faltan
 $locations = @(
-  @{ Label = "Backend";  Path = "$root\backend"  },
-  @{ Label = "Frontend"; Path = "$root\frontend" }
+  @{ Label = "Backend";  Path = Join-Path $root "backend"  },
+  @{ Label = "Frontend"; Path = Join-Path $root "frontend" }
 )
 
 foreach ($loc in $locations) {
   $nmPath = Join-Path $loc.Path "node_modules"
   if (-not (Test-Path $nmPath)) {
-    Write-Step "Instalando dependencias del $($loc.Label) (primera vez)..."
+    Write-Step "Instalando dependencias del $($loc.Label) (primera vez, puede tardar unos minutos)..."
     Push-Location $loc.Path
     try {
       npm install --loglevel=warn
       Write-OK "Dependencias del $($loc.Label) instaladas correctamente"
     } catch {
-      Write-Host "  ✘ Error al instalar dependencias del $($loc.Label)" -ForegroundColor Red
+      Write-Host "  ERROR al instalar dependencias del $($loc.Label)" -ForegroundColor Red
       Pop-Location
-      Pause
+      Read-Host "Presiona Enter para salir"
       exit 1
     }
     Pop-Location
@@ -67,7 +68,7 @@ foreach ($loc in $locations) {
   }
 }
 
-# ─── Iniciar servicios ────────────────────────────────────────────────────────
+# Iniciar servicios
 Write-Step "Iniciando servicios..."
 Write-Host ""
 
@@ -82,31 +83,31 @@ $fe = Start-Job -ScriptBlock {
   npx vite
 } -ArgumentList $root
 
-# Esperar a que los servicios arranquen
+# Esperar arranque
 Start-Sleep -Seconds 3
 
-# ─── Info ──────────────────────────────────────────────────────────────────────
-Write-Host "  ┌─────────────────────────────────────────────┐" -ForegroundColor DarkGreen
-Write-Host "  │  ✔  Frontend  →  http://localhost:5173      │" -ForegroundColor Green
-Write-Host "  │  ✔  Backend   →  http://localhost:3001      │" -ForegroundColor Green
-Write-Host "  └─────────────────────────────────────────────┘" -ForegroundColor DarkGreen
+# Info
+Write-Host "  +------------------------------------------+" -ForegroundColor DarkGreen
+Write-Host "  |  Frontend  -->  http://localhost:5173    |" -ForegroundColor Green
+Write-Host "  |  Backend   -->  http://localhost:3001    |" -ForegroundColor Green
+Write-Host "  +------------------------------------------+" -ForegroundColor DarkGreen
 Write-Host ""
-Write-Host "  Abriendo el navegador..." -ForegroundColor DarkCyan
 
-# Intentar abrir el navegador automáticamente
+# Abrir navegador
+Write-Host "  Abriendo el navegador..." -ForegroundColor DarkCyan
 Start-Sleep -Seconds 2
 try {
   Start-Process "http://localhost:5173"
-} catch { <# Sin navegador predeterminado, continuar #> }
+} catch { }
 
 Write-Host ""
 Write-Host "  Presiona cualquier tecla para detener los servidores..." -ForegroundColor Yellow
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 
-# ─── Detener todo ─────────────────────────────────────────────────────────────
+# Detener
 Write-Host ""
 Write-Step "Deteniendo servicios..."
 Stop-Job  $be, $fe -ErrorAction SilentlyContinue
 Remove-Job $be, $fe -ErrorAction SilentlyContinue
-Write-OK "SkillNexus detenido. ¡Hasta luego!"
+Write-OK "SkillNexus detenido. Hasta luego!"
 Write-Host ""
