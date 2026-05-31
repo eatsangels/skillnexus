@@ -91,7 +91,7 @@ A concrete, specialized stateless function. It performs one task with high relia
 *   It installs all dependencies, builds the frontend, and runs `electron-builder --win --publish always`.
 *   The workflow requires `permissions: contents: write` and uses `GH_TOKEN` (not `GITHUB_TOKEN`) for electron-builder.
 *   Artifacts (`.exe`, `.blockmap`, `latest.yml`) are uploaded to GitHub Releases automatically.
-*   **Latest release**: `v1.0.17` — includes Agents.sh search, discovery, and installation interface for Claude Code subagents.
+*   **Latest release**: `v1.0.18` — includes optimized search bar layout and filter group structure to prevent squishing on desktop/PC screens.
 
 ---
 
