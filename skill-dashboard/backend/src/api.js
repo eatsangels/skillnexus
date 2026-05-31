@@ -13,15 +13,22 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Read app version from package.json dynamically
-let appVersion = "1.0.10";
+let appVersion = "1.0.11"; // fallback — update this with each release
 try {
-  let pkgPath = join(__dirname, "..", "..", "..", "package.json");
-  if (!existsSync(pkgPath)) {
-    pkgPath = join(__dirname, "..", "..", "..", "..", "app.asar", "package.json");
-  }
-  if (existsSync(pkgPath)) {
-    const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
-    appVersion = pkg.version;
+  // Posibles ubicaciones: dev (3 niveles arriba) o producción (app.asar)
+  const candidates = [
+    join(__dirname, "..", "..", "..", "package.json"),
+    join(__dirname, "..", "..", "..", "..", "package.json"),
+    join(__dirname, "..", "..", "..", "..", "app.asar", "package.json"),
+  ];
+  for (const pkgPath of candidates) {
+    if (existsSync(pkgPath)) {
+      const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
+      if (pkg.version) {
+        appVersion = pkg.version;
+        break;
+      }
+    }
   }
 } catch (e) {
   console.error("Failed to read version from package.json:", e);
