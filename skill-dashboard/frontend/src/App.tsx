@@ -280,11 +280,12 @@ export default function App() {
         />
 
         <div className="bg-surface-950/80 backdrop-blur-sm rounded-2xl border border-surface-800/60 p-5 mb-8">
-          <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4">
-            <TabNav tab={tab} onTabChange={setTab} />
-            {tab !== "video" && (
-              <>
-                <div className="flex-1 relative w-full">
+          <div className="flex flex-col gap-4">
+            {/* Fila superior: Navegación por pestañas y Barra de búsqueda */}
+            <div className={`flex flex-col md:flex-row md:items-center md:justify-between gap-4 ${tab !== "video" ? "pb-4 border-b border-surface-800/60" : ""}`}>
+              <TabNav tab={tab} onTabChange={setTab} />
+              {tab !== "video" && (
+                <div className="relative w-full md:w-80 shrink-0">
                   <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-500 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
@@ -296,6 +297,12 @@ export default function App() {
                     className="w-full bg-surface-900 border border-surface-700/50 rounded-xl pl-10 pr-4 py-2.5 text-sm text-surface-100 placeholder-surface-500 focus:outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/20 transition-all duration-200"
                   />
                 </div>
+              )}
+            </div>
+
+            {/* Fila inferior: Selectores de filtros y opciones */}
+            {tab !== "video" && (
+              <div className="flex flex-wrap items-center gap-3">
                 {tab === "skills" && allFrameworks.length > 0 && (
                   <select
                     value={frameworkFilter}
@@ -406,7 +413,7 @@ export default function App() {
                     </button>
                   </>
                 )}
-              </>
+              </div>
             )}
           </div>
         </div>
