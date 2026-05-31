@@ -1,68 +1,406 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --color-brand-50: #f5f3ff;
-  --color-brand-100: #ede9fe;
-  --color-brand-200: #ddd6fe;
-  --color-brand-300: #c084fc;
-  --color-brand-400: #a78bfa;
-  --color-brand-500: #8b5cf6;
-  --color-brand-600: #7c3aed;
-  --color-brand-700: #6d28d9;
-  --color-brand-800: #5b21b6;
-  --color-brand-900: #4c1d95;
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-display: "Space Grotesk", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  --color-surface-50: #f8fafc;
-  --color-surface-100: #f1f5f9;
-  --color-surface-200: #e2e8f0;
-  --color-surface-300: #cbd5e1;
-  --color-surface-400: #94a3b8;
-  --color-surface-500: #64748b;
-  --color-surface-600: #475569;
-  --color-surface-700: #334155;
-  --color-surface-800: #1e293b;
-  --color-surface-850: #0f172a;
-  --color-surface-900: #0d1321;
-  --color-surface-950: #080c14;
-  --color-surface-975: #05070b;
+  /* Redefine surface colors to light / warm tones for Neo-Brutalist Pop */
+  --color-surface-50: #000000;
+  --color-surface-100: #000000;
+  --color-surface-200: #171717;
+  --color-surface-300: #262626;
+  --color-surface-400: #404040;
+  --color-surface-500: #525252;
+  --color-surface-600: #737373;
+  --color-surface-700: #000000; /* border-surface-700 -> pure black */
+  --color-surface-800: #000000; /* border-surface-800 -> pure black */
+  --color-surface-850: #000000;
+  --color-surface-900: #ffffff; /* bg-surface-900 (cards background) */
+  --color-surface-950: #ffffff; /* bg-surface-950 (panel background) */
+  --color-surface-975: #FAF6F0; /* bg-surface-975 (page canvas background) */
+
+  /* Redefine brand colors to a vibrant but clean violet / yellow combo */
+  --color-brand-50: #faf5ff;
+  --color-brand-100: #f3e8ff;
+  --color-brand-200: #e9d5ff;
+  --color-brand-300: #d8b4fe;
+  --color-brand-400: #c084fc;
+  --color-brand-500: #a855f7;
+  --color-brand-600: #FCE22A; /* Active tab yellow */
+  --color-brand-700: #6b21a8;
+  --color-brand-800: #581c87;
+  --color-brand-900: #3b0764;
 }
 
 @layer base {
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--color-surface-975) !important;
+    color: var(--color-surface-100) !important;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    color: #000000 !important;
+  }
+  p {
+    font-family: var(--font-sans);
+  }
+  code, pre {
+    font-family: var(--font-mono);
+  }
   * {
     scrollbar-width: thin;
-    scrollbar-color: rgba(255,255,255,0.08) transparent;
+    scrollbar-color: rgba(0,0,0,0.1) transparent;
   }
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+  ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.2); }
 }
 
+/* ==========================================
+   NEO-BRUTALIST COMPONENT OVERRIDES
+   ========================================== */
+
+/* Main Header Logo and Elements */
+img[alt="SkillNexus Logo"] {
+  border: 2px solid #000000 !important;
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+  border-radius: 10px !important;
+}
+
+/* Base Cards (SkillCard, AgentCard, Remote Cards) */
+[role="button"].w-full,
+.w-full.text-left.group.relative {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 2px solid #000000 !important;
+  box-shadow: 4px 4px 0px 0px #000000 !important;
+  border-radius: 12px !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+  backdrop-filter: none !important;
+  transform: none;
+}
+[role="button"].w-full:hover,
+.w-full.text-left.group.relative:hover {
+  transform: translate(-3px, -3px) !important;
+  box-shadow: 7px 7px 0px 0px #000000 !important;
+  background: #ffffff !important;
+  border-color: #000000 !important;
+}
+
+/* Text elements inside cards */
+[role="button"].w-full h3,
+.w-full.text-left.group.relative h3 {
+  color: #000000 !important;
+  font-family: var(--font-display) !important;
+  font-weight: 700 !important;
+}
+[role="button"].w-full p,
+.w-full.text-left.group.relative p {
+  color: #374151 !important;
+}
+
+/* Badge styling for tags inside cards */
+[role="button"].w-full span,
+.w-full.text-left.group.relative span {
+  border: 1.5px solid #000000 !important;
+  background: #C5B4E3 !important; /* Pastel Lavender */
+  color: #000000 !important;
+  opacity: 1 !important;
+  box-shadow: 1.5px 1.5px 0px 0px #000000 !important;
+  font-weight: 700 !important;
+  border-radius: 6px !important;
+}
+[role="button"].w-full span.uppercase,
+.w-full.text-left.group.relative span.uppercase {
+  background: #FFB07F !important; /* Pastel Peach */
+}
+
+[role="button"].w-full code,
+.w-full.text-left.group.relative code {
+  border: 1.5px solid #000000 !important;
+  background: #FCE22A !important; /* Pastel Yellow */
+  color: #000000 !important;
+  opacity: 1 !important;
+  box-shadow: 1.5px 1.5px 0px 0px #000000 !important;
+  border-radius: 6px !important;
+}
+
+/* Copy name button inside cards */
+[role="button"].w-full button,
+.w-full.text-left.group.relative button {
+  border: 1.5px solid #000000 !important;
+  background: #ffffff !important;
+  color: #000000 !important;
+  border-radius: 6px !important;
+  box-shadow: 1.5px 1.5px 0px 0px #000000 !important;
+  opacity: 1 !important;
+}
+[role="button"].w-full button:hover,
+.w-full.text-left.group.relative button:hover {
+  background: #FCE22A !important;
+}
+
+/* Stats panel cards */
+.grid-cols-2 > div,
+.grid-cols-3 > div,
+.grid-cols-6 > div {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 2px solid #000000 !important;
+  box-shadow: 4px 4px 0px 0px #000000 !important;
+  border-radius: 12px !important;
+  background-image: none !important;
+}
+.grid-cols-2 > div span,
+.grid-cols-3 > div span,
+.grid-cols-6 > div span {
+  color: #000000 !important;
+}
+.grid-cols-2 > div .text-surface-500,
+.grid-cols-3 > div .text-surface-500,
+.grid-cols-6 > div .text-surface-500 {
+  color: #374151 !important;
+}
+.grid-cols-2 > div .bg-surface-900\/50,
+.grid-cols-3 > div .bg-surface-900\/50,
+.grid-cols-6 > div .bg-surface-900\/50 {
+  border: 1px solid #000000 !important;
+  background: #f3f4f6 !important;
+  color: #000000 !important;
+}
+
+/* Category pills in grouped view */
+section.animate-fade-in > div.inline-flex {
+  background: #C5B4E3 !important; /* Pastel Lavender header banner */
+  color: #000000 !important;
+  border: 2.5px solid #000000 !important;
+  box-shadow: 3px 3px 0px 0px #000000 !important;
+  border-radius: 10px !important;
+  background-image: none !important;
+}
+section.animate-fade-in > div.inline-flex h2 {
+  color: #000000 !important;
+  font-weight: 800 !important;
+}
+section.animate-fade-in > div.inline-flex span {
+  background: #ffffff !important;
+  border: 1.5px solid #000000 !important;
+  color: #000000 !important;
+}
+
+/* Stats topCategories grid */
+.mb-10 .flex.flex-wrap.gap-2.mt-4 > div {
+  background: #ffffff !important;
+  border: 1.5px solid #000000 !important;
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+  border-radius: 8px !important;
+  color: #000000 !important;
+}
+.mb-10 .flex.flex-wrap.gap-2.mt-4 > div span {
+  color: #000000 !important;
+}
+
+/* Filter Panel Container */
+.bg-surface-950\/80 {
+  background: #ffffff !important;
+  border: 2.5px solid #000000 !important;
+  box-shadow: 5px 5px 0px 0px #000000 !important;
+  border-radius: 16px !important;
+  color: #000000 !important;
+  backdrop-filter: none !important;
+}
+
+/* Input Fields and Select Dropdowns */
+input[type="text"],
+select {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 2px solid #000000 !important;
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+  border-radius: 10px !important;
+  padding-left: 2.5rem !important;
+}
+select {
+  padding-left: 1rem !important;
+}
+input[type="text"]:focus,
+select:focus {
+  border-color: #000000 !important;
+  box-shadow: 4px 4px 0px 0px #000000 !important;
+  transform: translate(-1px, -1px);
+}
+
+/* Top Tab Bar Navigation */
+.flex.gap-1.bg-surface-900\/80 {
+  background: #ffffff !important;
+  border: 2px solid #000000 !important;
+  border-radius: 12px !important;
+  padding: 4px !important;
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+  backdrop-filter: none !important;
+}
+.flex.gap-1.bg-surface-900\/80 button {
+  border-radius: 8px !important;
+  color: #000000 !important;
+  font-weight: 600 !important;
+  transition: all 0.15s ease !important;
+  border: 2px solid transparent !important;
+}
+.flex.gap-1.bg-surface-900\/80 button.bg-brand-600 {
+  background: #FCE22A !important; /* Active tab is yellow! */
+  color: #000000 !important;
+  font-weight: 800 !important;
+  border: 2px solid #000000 !important;
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+  transform: translate(-1px, -1px);
+}
+.flex.gap-1.bg-surface-900\/80 button:not(.bg-brand-600):hover {
+  background: #f3f4f6 !important;
+  color: #000000 !important;
+}
+
+/* Action buttons ("Group by category", "Ayuda") */
+button.px-5.py-2\.5,
+button.text-xs.font-semibold {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 2px solid #000000 !important;
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+  border-radius: 10px !important;
+  transition: all 0.15s ease !important;
+}
+button.px-5.py-2\.5:hover,
+button.text-xs.font-semibold:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 3px 3px 0px 0px #000000 !important;
+  background: #f9fafb !important;
+}
+
+/* Header link styling */
+a.bg-brand-500\/10 {
+  background: #FFB07F !important; /* Peach bg */
+  color: #000000 !important;
+  border: 1.5px solid #000000 !important;
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+  font-weight: 700 !important;
+}
+a.bg-brand-500\/10:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px 0px #000000 !important;
+}
+
+/* Modals Override (SkillModal, AgentModal, etc.) */
+.fixed.inset-0.z-50 {
+  background: rgba(250, 246, 240, 0.75) !important; /* Soft paper tint backdrop */
+  backdrop-filter: blur(4px) !important;
+}
+.fixed.inset-0.z-50 .bg-surface-900,
+.fixed.inset-0.z-50 .bg-surface-950,
+.fixed.inset-0.z-50 .w-full.max-w-2xl {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 3px solid #000000 !important;
+  box-shadow: 8px 8px 0px 0px #000000 !important;
+  border-radius: 16px !important;
+}
+.fixed.inset-0.z-50 h2,
+.fixed.inset-0.z-50 h3,
+.fixed.inset-0.z-50 h4,
+.fixed.inset-0.z-50 p,
+.fixed.inset-0.z-50 li,
+.fixed.inset-0.z-50 span,
+.fixed.inset-0.z-50 label,
+.fixed.inset-0.z-50 pre,
+.fixed.inset-0.z-50 code,
+.fixed.inset-0.z-50 div {
+  color: #000000 !important;
+}
+
+/* Reset colors for inner modal elements */
+.fixed.inset-0.z-50 .bg-surface-900\/60,
+.fixed.inset-0.z-50 .bg-surface-950\/20,
+.fixed.inset-0.z-50 .bg-surface-950\/40,
+.fixed.inset-0.z-50 .bg-gradient-to-br {
+  background: #ffffff !important;
+  border: 2px solid #000000 !important;
+  box-shadow: 3px 3px 0px 0px #000000 !important;
+  border-radius: 10px !important;
+  background-image: none !important;
+}
+
+/* Inner modal sub-elements text colors */
+.fixed.inset-0.z-50 .text-surface-400,
+.fixed.inset-0.z-50 .text-surface-300,
+.fixed.inset-0.z-50 .text-brand-300 {
+  color: #1f2937 !important;
+}
+
+/* Keyboard keys (kbd) */
+.fixed.inset-0.z-50 kbd {
+  background: #f3f4f6 !important;
+  border: 1.5px solid #000000 !important;
+  color: #000000 !important;
+  box-shadow: 1px 1px 0px 0px #000000 !important;
+}
+
+/* Close button and action buttons inside modals */
+.fixed.inset-0.z-50 button.px-5.py-2,
+.fixed.inset-0.z-50 a.bg-brand-600 {
+  background: #FCE22A !important;
+  color: #000000 !important;
+  border: 2px solid #000000 !important;
+  box-shadow: 3px 3px 0px 0px #000000 !important;
+  border-radius: 10px !important;
+  font-weight: 700 !important;
+}
+.fixed.inset-0.z-50 button.px-5.py-2:hover,
+.fixed.inset-0.z-50 a.bg-brand-600:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 4px 4px 0px 0px #000000 !important;
+}
+
+/* Help Modal Lang buttons */
+.fixed.inset-0.z-50 .flex.items-center.gap-1.bg-surface-950 {
+  background: #ffffff !important;
+  border: 1.5px solid #000000 !important;
+  border-radius: 8px !important;
+}
+.fixed.inset-0.z-50 .flex.items-center.gap-1.bg-surface-950 button {
+  color: #000000 !important;
+}
+.fixed.inset-0.z-50 .flex.items-center.gap-1.bg-surface-950 button.bg-brand-500 {
+  background: #FCE22A !important;
+  border: 1px solid #000000 !important;
+}
+
+/* Video Studio styling overrides */
+.w-full.bg-surface-950\/50 {
+  background: #ffffff !important;
+  border: 2px solid #000000 !important;
+  box-shadow: 4px 4px 0px 0px #000000 !important;
+  border-radius: 12px !important;
+}
+.w-full.bg-surface-950\/50 textarea {
+  background: #f9fafb !important;
+  color: #000000 !important;
+  border: 1.5px solid #000000 !important;
+  font-family: var(--font-mono) !important;
+}
+.w-full.bg-surface-950\/50 .font-mono {
+  color: #000000 !important;
+}
+
+/* Animation overrides */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.95); }
+  from { opacity: 0; transform: scale(0.97); }
   to { opacity: 1; transform: scale(1); }
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-out forwards;
-}
-
-.animate-scale-in {
-  animation: scaleIn 0.2s ease-out forwards;
-}
-
-.card-shimmer {
-  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.03) 50%, transparent 100%);
-  background-size: 200% 100%;
-  animation: shimmer 2s ease-in-out infinite;
 }

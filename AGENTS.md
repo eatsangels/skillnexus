@@ -91,7 +91,7 @@ A concrete, specialized stateless function. It performs one task with high relia
 *   It installs all dependencies, builds the frontend, and runs `electron-builder --win --publish always`.
 *   The workflow requires `permissions: contents: write` and uses `GH_TOKEN` (not `GITHUB_TOKEN`) for electron-builder.
 *   Artifacts (`.exe`, `.blockmap`, `latest.yml`) are uploaded to GitHub Releases automatically.
-*   **Latest release**: `v1.0.18` — includes optimized search bar layout and filter group structure to prevent squishing on desktop/PC screens.
+*   **Latest release**: `v1.0.19` — Migrated the entire dashboard visual identity to a high-impact, custom Neo-Brutalist Pop design system (crisp high-contrast borders, solid shadows, and warm-toned pastel palette).
 
 ---
 
@@ -179,7 +179,12 @@ The workspace frontend uses **Tailwind CSS v4** with a custom obsidian dark them
 *   `--color-brand-600` (`#7c3aed`): Violet brand accent color.
 *   `--color-brand-500` (`#8b5cf6`): Focus glow/active indicator.
 
-### 2. Micro-interactions
+### 2. Typography
+*   `--font-sans` (`Poppins`): Geometric sans-serif used for overall dashboard controls, navigation, headings, and labels.
+*   `--font-serif` (`Lora`): Editorial serif font used for descriptive and narrative text blocks to improve reading flow and brand elegance.
+*   `--font-mono` (`JetBrains Mono`): Monospace font for code components, commands, and JSON data.
+
+### 3. Micro-interactions
 *   Transitions: Use `transition-all duration-200` on hovers.
 *   Borders: Avoid thick borders. Prefer `border border-surface-700/50` or `border border-white/5`.
 
