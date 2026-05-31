@@ -179,7 +179,7 @@ function getSpanishDescription(agent) {
   return agent.description;
 }
 
-function classifyAgent(name) {
+export function classifyAgent(name) {
   const n = name.toLowerCase();
   for (const cat of CATEGORIES) {
     for (const kw of cat.keywords) {
