@@ -2,11 +2,21 @@ import { exec } from "child_process";
 import { generateSpanishDescription } from "./translator.js";
 import { fileURLToPath } from "url";
 import { join, dirname } from "path";
-import { readFileSync, writeFileSync, existsSync } from "fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
+import { homedir } from "os";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const CACHE_FILE_PATH = join(__dirname, "..", "skills-catalog-cache.json");
+
+const CACHE_DIR = join(homedir(), ".config", "opencode");
+try {
+  if (!existsSync(CACHE_DIR)) {
+    mkdirSync(CACHE_DIR, { recursive: true });
+  }
+} catch (mkdirErr) {
+  console.error("[Skills-sh] Failed to create cache directory:", mkdirErr);
+}
+const CACHE_FILE_PATH = join(CACHE_DIR, "skills-catalog-cache.json");
 
 const KNOWN_SOURCES = [
   "vercel-labs/agent-skills",
@@ -76,6 +86,11 @@ function classifySkill(name, source, desc) {
 let catalogCache = [];
 let catalogTime = null;
 const CACHE_TTL = 10 * 60 * 1000;
+let onCatalogRefreshedCallback = null;
+
+export function onCatalogRefreshed(cb) {
+  onCatalogRefreshedCallback = cb;
+}
 
 try {
   if (existsSync(CACHE_FILE_PATH)) {
@@ -237,6 +252,15 @@ export async function refreshCatalog() {
     console.log(`[Skills-sh] Saved ${catalogCache.length} skills to persistent cache file.`);
   } catch (err) {
     console.error("[Skills-sh] Failed to save persistent cache file:", err);
+  }
+
+  if (onCatalogRefreshedCallback) {
+    try {
+      console.log("[Skills-sh] Triggering onCatalogRefreshed callback...");
+      onCatalogRefreshedCallback();
+    } catch (cbErr) {
+      console.error("[Skills-sh] Error in onCatalogRefreshed callback:", cbErr);
+    }
   }
 
   return catalogCache;

@@ -118,6 +118,11 @@ export default function App() {
   useEffect(() => {
     const eventSource = new EventSource(`${BASE}/events`);
     
+    eventSource.onopen = () => {
+      console.log("[SSE] Connection opened, reloading data...");
+      reloadData(true);
+    };
+
     eventSource.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);

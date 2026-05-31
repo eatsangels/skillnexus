@@ -2,7 +2,7 @@ import { Router } from "express";
 import { spawn } from "child_process";
 import { scanSkills } from "./skill-scanner.js";
 import { scanAgents } from "./agent-scanner.js";
-import { getCatalog, refreshCatalog, searchSkills, fetchSkillDetail, installSkill } from "./skills-sh-scanner.js";
+import { getCatalog, refreshCatalog, searchSkills, fetchSkillDetail, installSkill, onCatalogRefreshed } from "./skills-sh-scanner.js";
 import { homedir } from "os";
 import { join, dirname } from "path";
 import { CONFIG } from "./config.js";
@@ -71,6 +71,11 @@ function scan() {
 }
 
 scan();
+
+onCatalogRefreshed(() => {
+  console.log("[API] Catalog refreshed, broadcasting update to all clients...");
+  broadcast("update", { lastScan });
+});
 
 router.get("/skills", (_req, res) => {
   const summary = skillsCache.map((s) => ({
