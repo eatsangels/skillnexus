@@ -51,6 +51,22 @@ id_skills/
 
 ---
 
+## 🧠 Agents vs. 🔧 Skills Concept
+
+This workspace orchestrates two cognitive primitives. The key distinction is control flow: **an Agent decides what to do, while a Skill knows how to do a specific task.**
+
+### 🧠 Agent (Agente)
+An autonomous execution loop that receives a high-level goal, analyzes the situation, plans, selects the appropriate tools/skills, and adapts its actions dynamically based on outcomes.
+*   **Analogy**: The **Manager** of a project.
+*   **Example prompt**: *"Create a Uber Eats clone"* -> The Agent coordinates database schema design, backend logic generation, UI composition, and deployment.
+
+### 🔧 Skill (Habilidad)
+A concrete, specialized stateless function. It performs one task with high reliability and does not make strategic decisions.
+*   **Analogy**: A **Specialized Employee** (e.g. programmer, designer, database admin).
+*   **Example input**: *"Generate login page React code"* -> The Skill returns only the React component.
+
+---
+
 ## 🖥️ Desktop Application (Electron)
 
 ### Scripts (run from repo root `c:\ID_Skills`)
