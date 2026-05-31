@@ -74,7 +74,7 @@ img[alt="SkillNexus Logo"] {
 /* Base Cards (SkillCard, AgentCard, Remote Cards) */
 [role="button"].w-full,
 .w-full.text-left.group.relative {
-  background: #ffffff !important;
+  background: #040000 !important;
   color: #000000 !important;
   border: 2px solid #000000 !important;
   box-shadow: 4px 4px 0px 0px #000000 !important;
@@ -216,18 +216,24 @@ section.animate-fade-in > div.inline-flex span {
 
 /* Input Fields and Select Dropdowns */
 input[type="text"],
+input[type="number"],
+input[type="password"],
 select {
   background: #ffffff !important;
   color: #000000 !important;
   border: 2px solid #000000 !important;
   box-shadow: 2px 2px 0px 0px #000000 !important;
   border-radius: 10px !important;
+}
+input[type="text"] {
   padding-left: 2.5rem !important;
 }
 select {
   padding-left: 1rem !important;
 }
 input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="password"]:focus,
 select:focus {
   border-color: #000000 !important;
   box-shadow: 4px 4px 0px 0px #000000 !important;
@@ -378,20 +384,53 @@ a.bg-brand-500\/10:hover {
 }
 
 /* Video Studio styling overrides */
-.w-full.bg-surface-950\/50 {
+.bg-surface-950\/80 textarea {
   background: #ffffff !important;
-  border: 2px solid #000000 !important;
-  box-shadow: 4px 4px 0px 0px #000000 !important;
-  border-radius: 12px !important;
-}
-.w-full.bg-surface-950\/50 textarea {
-  background: #f9fafb !important;
   color: #000000 !important;
-  border: 1.5px solid #000000 !important;
   font-family: var(--font-mono) !important;
 }
-.w-full.bg-surface-950\/50 .font-mono {
-  color: #000000 !important;
+
+/* Code Editor Wrapper */
+.bg-surface-950\/80 .bg-surface-975 {
+  background: #ffffff !important;
+  border: 2px solid #000000 !important;
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+}
+
+/* Iniciar Renderizado de Video button */
+.bg-surface-950\/80 button.bg-brand-600 {
+  background: #FCE22A !important; /* Bold yellow background */
+  color: #000000 !important; /* Black text */
+  border: 2.5px solid #000000 !important; /* Bold border */
+  box-shadow: 4px 4px 0px 0px #000000 !important; /* Solid shadow */
+  border-radius: 12px !important;
+  transition: all 0.15s ease-in-out !important;
+}
+
+.bg-surface-950\/80 button.bg-brand-600:hover:not(:disabled) {
+  transform: translate(-2px, -2px) !important;
+  box-shadow: 6px 6px 0px 0px #000000 !important;
+}
+
+.bg-surface-950\/80 button.bg-brand-600:disabled {
+  opacity: 0.5 !important;
+  transform: none !important;
+  box-shadow: 2px 2px 0px 0px #000000 !important;
+}
+
+/* Biblioteca de plantillas button */
+.bg-surface-950\/80 button.bg-brand-600\/15 {
+  background: #C5B4E3 !important; /* Lavender bg */
+  color: #000000 !important; /* Black text */
+  border: 1.5px solid #000000 !important;
+  box-shadow: 1.5px 1.5px 0px 0px #000000 !important;
+  transition: all 0.15s ease-in-out !important;
+  opacity: 1 !important;
+}
+.bg-surface-950\/80 button.bg-brand-600\/15:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 2.5px 2.5px 0px 0px #000000 !important;
+  background: #b5a2d6 !important;
 }
 
 /* Animation overrides */
