@@ -842,33 +842,46 @@ function NexusTiger() {
   const [fadingOut, setFadingOut] = useState(false);
   const [bubbleText, setBubbleText] = useState("");
   const [bubbleType, setBubbleType] = useState<BubbleType>("speech");
-  // Track tiger's left position (%) in sync with the CSS animation
   const [tigerLeft, setTigerLeft] = useState(-2);
+  const [isFlipped, setIsFlipped] = useState(true);
+  const [isHovered, setIsHovered] = useState(false);
 
-  // Single interval that tracks both position & direction from animation timing
+  const elapsedRef = useRef(0);
+  const lastTickRef = useRef(Date.now());
+
+  // Track position & direction via JS, pausing animation smoothly on hover
   useEffect(() => {
+    lastTickRef.current = Date.now();
+    
     const tick = () => {
-      const elapsed = (Date.now() - ANIM_START) % ANIM_DURATION_MS;
-      const p = elapsed / ANIM_DURATION_MS;
+      const now = Date.now();
+      const delta = now - lastTickRef.current;
+      lastTickRef.current = now;
 
-      let left: number;
-      if (p < 0.48) {
-        // Walking left → right: -2% to 88%
-        left = -2 + (p / 0.48) * 90;
-      } else if (p < 0.50) {
-        left = 88; // pausing at right end
-      } else if (p < 0.98) {
-        // Walking right → left: 88% to -2%
-        left = 88 - ((p - 0.50) / 0.48) * 90;
-      } else {
-        left = -2; // pausing at left end
+      if (!isHovered) {
+        elapsedRef.current = (elapsedRef.current + delta) % ANIM_DURATION_MS;
+        const p = elapsedRef.current / ANIM_DURATION_MS;
+
+        let left: number;
+        if (p < 0.48) {
+          // Walking left → right: -2% to 88%
+          left = -2 + (p / 0.48) * 90;
+        } else if (p < 0.50) {
+          left = 88; // pausing at right end
+        } else if (p < 0.98) {
+          // Walking right → left: 88% to -2%
+          left = 88 - ((p - 0.50) / 0.48) * 90;
+        } else {
+          left = -2; // pausing at left end
+        }
+        setTigerLeft(left);
+        setIsFlipped(p < 0.50);
       }
-      setTigerLeft(left);
     };
-    tick();
-    const id = setInterval(tick, 50); // smooth enough, cheap enough
+
+    const id = setInterval(tick, 50);
     return () => clearInterval(id);
-  }, []);
+  }, [isHovered]);
 
   const speechPhrases = [
     "¡Ruge con código! 🐯",
@@ -912,9 +925,9 @@ function NexusTiger() {
     triggerBubble("speech", randomPhrase);
   };
 
-  // Hide bubble with fade-out
+  // Hide bubble with fade-out, but keep it visible and pause fade timer if hovered
   useEffect(() => {
-    if (showBubble) {
+    if (showBubble && !isHovered) {
       const fadeTimer = setTimeout(() => setFadingOut(true), 2800);
       const hideTimer = setTimeout(() => {
         setShowBubble(false);
@@ -924,14 +937,19 @@ function NexusTiger() {
         clearTimeout(fadeTimer);
         clearTimeout(hideTimer);
       };
+    } else if (isHovered) {
+      setFadingOut(false);
     }
-  }, [showBubble]);
+  }, [showBubble, isHovered]);
 
-  // Auto-trigger bubbles randomly
+  // Auto-trigger bubbles randomly only when not hovered
   useEffect(() => {
+    if (isHovered) return;
+
     const scheduleNext = () => {
       const delay = 8000 + Math.random() * 10000;
       return setTimeout(() => {
+        if (isHovered) return;
         const isThought = Math.random() < 0.4;
         const pool = isThought ? thoughtPhrases : speechPhrases;
         const randomPhrase = pool[Math.floor(Math.random() * pool.length)];
@@ -941,6 +959,7 @@ function NexusTiger() {
 
     let timer = scheduleNext();
     const interval = setInterval(() => {
+      if (isHovered) return;
       clearTimeout(timer);
       timer = scheduleNext();
     }, 3500);
@@ -950,35 +969,39 @@ function NexusTiger() {
       clearInterval(interval);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // The bubble is rendered as position:fixed OUTSIDE the flipped container,
-  // centered above the tiger using the JS-tracked left position.
-  // Container width is 10rem (160px). Center = tigerLeft% + 5rem.
-  const bubbleLeft = `calc(${Math.max(0, Math.min(85, tigerLeft))}% + 5rem)`;
+  }, [isHovered]);
 
   return (
     <>
-      <div className="nexus-tiger-container">
-        <div className="nexus-tiger-wrapper">
+      <div 
+        className="nexus-tiger-container"
+        style={{ left: `${tigerLeft}%` }}
+        onMouseEnter={() => {
+          setIsHovered(true);
+          handleInteraction();
+        }}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <div 
+          className="nexus-tiger-wrapper"
+          style={{ transform: isFlipped ? "scaleX(-1)" : "scaleX(1)" }}
+        >
           <TransparentVideo
             src={`${import.meta.env.BASE_URL}Animado.mp4`}
             className="nexus-tiger-image"
             onClick={handleInteraction}
-            onMouseEnter={handleInteraction}
           />
         </div>
-      </div>
 
-      {/* Bubble rendered outside flipped container — text is always readable */}
-      {showBubble && (
-        <div
-          className={`nexus-speech-bubble nexus-speech-bubble--${bubbleType} ${fadingOut ? "nexus-speech-bubble--fade-out" : ""}`}
-          style={{ left: bubbleLeft }}
-        >
-          {bubbleText}
-        </div>
-      )}
+        {/* Bubble rendered inside container — text is always readable and moves with the tiger */}
+        {showBubble && (
+          <div
+            className={`nexus-speech-bubble nexus-speech-bubble--${bubbleType} ${fadingOut ? "nexus-speech-bubble--fade-out" : ""}`}
+          >
+            {bubbleText}
+          </div>
+        )}
+      </div>
     </>
   );
 }

@@ -453,14 +453,9 @@ a.bg-brand-500\/10:hover {
   width: 10rem;
   height: 10rem;
   pointer-events: auto;
-  animation: walk-back-and-forth 22s linear infinite;
   display: flex;
   align-items: flex-end;
   justify-content: center;
-}
-
-.nexus-tiger-container:hover {
-  animation-play-state: paused;
 }
 
 .nexus-tiger-wrapper {
@@ -512,11 +507,11 @@ a.bg-brand-500\/10:hover {
   }
 }
 
-/* Speech bubble — rendered as fixed, outside the flipped container */
+/* Speech bubble — rendered as absolute, inside the container */
 .nexus-speech-bubble {
-  position: fixed;
+  position: absolute;
   bottom: 11rem;
-  /* left is set dynamically via inline style from JS */
+  left: 50%;
   transform: translateX(-50%);
   color: #000000 !important;
   border: 2px solid #000000 !important;
@@ -526,7 +521,7 @@ a.bg-brand-500\/10:hover {
   font-size: 11px !important;
   font-weight: bold !important;
   white-space: nowrap;
-  pointer-events: none;
+  pointer-events: auto;
   z-index: 51;
   animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }

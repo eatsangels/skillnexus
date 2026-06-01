@@ -91,7 +91,7 @@ A concrete, specialized stateless function. It performs one task with high relia
 *   It installs all dependencies, builds the frontend, and runs `electron-builder --win --publish always`.
 *   The workflow requires `permissions: contents: write` and uses `GH_TOKEN` (not `GITHUB_TOKEN`) for electron-builder.
 *   Artifacts (`.exe`, `.blockmap`, `latest.yml`) are uploaded to GitHub Releases automatically.
-*   **Latest release**: `v1.0.21` — Hotfix: mascot video path now uses `import.meta.env.BASE_URL` so it resolves correctly in Electron (file:// protocol) and web dev server alike. Added `crossOrigin="anonymous"` to avoid canvas taint.
+*   **Latest release**: `v1.0.22` — Fix mascot hover pause functionality and sync dialogue box correctly.
 
 ---
 
