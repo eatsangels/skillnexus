@@ -806,6 +806,7 @@ function TransparentVideo({ src, className, onClick, onMouseEnter }: Transparent
       <video
         ref={videoRef}
         src={src}
+        crossOrigin="anonymous"
         style={{
           position: "absolute",
           width: "1px",
@@ -961,7 +962,7 @@ function NexusTiger() {
       <div className="nexus-tiger-container">
         <div className="nexus-tiger-wrapper">
           <TransparentVideo
-            src="/Animado.mp4"
+            src={`${import.meta.env.BASE_URL}Animado.mp4`}
             className="nexus-tiger-image"
             onClick={handleInteraction}
             onMouseEnter={handleInteraction}
