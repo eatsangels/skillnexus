@@ -60,7 +60,9 @@ export default function HelpModal({ systemPaths, onClose }: Props) {
       supportTitle: "Contacto y Soporte",
       supportDesc: "Si tienes alguna sugerencia de diseño, encuentras algún error o deseas colaborar, puedes comunicarte directamente con el desarrollador o visitar su portafolio.",
       visitPortfolio: "Visitar Portafolio",
-      closeBtn: "Entendido / Cerrar"
+      closeBtn: "Entendido / Cerrar",
+      videoTitle: "Guía Rápida de Introducción",
+      videoDesc: "Visualiza este video introductorio para familiarizarte con las capacidades, interfaz e integración de agentes y habilidades en SkillNexus."
     },
     en: {
       title: "Help Center - SkillNexus",
@@ -93,7 +95,9 @@ export default function HelpModal({ systemPaths, onClose }: Props) {
       supportTitle: "Contact & Support",
       supportDesc: "If you have design suggestions, find bugs, or want to collaborate, feel free to contact the developer directly or visit his personal website.",
       visitPortfolio: "Visit Portfolio",
-      closeBtn: "Got it / Close"
+      closeBtn: "Got it / Close",
+      videoTitle: "Quick Introduction Guide",
+      videoDesc: "Watch this introductory video to get familiar with the capabilities, interface, and integration of agents and skills in SkillNexus."
     }
   };
 
@@ -151,6 +155,27 @@ export default function HelpModal({ systemPaths, onClose }: Props) {
               {t.aboutTitle}
             </h3>
             <p className="text-sm text-surface-300 leading-relaxed">{t.aboutDesc}</p>
+          </div>
+
+          {/* Video Tutorial */}
+          <div className="bg-surface-950/40 border border-surface-800/50 rounded-xl p-5 space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="w-1.5 h-4 bg-brand-500 rounded-full"></span>
+              <h3 className="text-xs font-bold text-surface-200 uppercase tracking-wider">
+                {t.videoTitle}
+              </h3>
+            </div>
+            <div className="relative aspect-video rounded-xl overflow-hidden border-2 border-black shadow-[4px_4px_0px_0px_#000000] bg-black group transition-all duration-300 hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#000000]">
+              <video
+                src={`${import.meta.env.BASE_URL}intro.mp4`}
+                controls
+                className="w-full h-full object-cover"
+                poster={`${import.meta.env.BASE_URL}mascot_logo.png`}
+              />
+            </div>
+            <p className="text-xs text-surface-400 leading-relaxed">
+              {t.videoDesc}
+            </p>
           </div>
 
           {/* Difference between Agent and Skill */}
