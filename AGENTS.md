@@ -167,6 +167,24 @@ When adding a new template, export it from `templates.ts` and it will appear aut
 
 ---
 
+## 🐯 Interactive Mascot & Tutorial Media
+
+### 1. Interactive Tiger Mascot (`NexusTiger`)
+*   **Chroma-Keying Video Pipeline**: The `TransparentVideo` component renders a hidden HTML5 video (`Animado.mp4` from public assets) and draws each frame onto a `<canvas>`. It automatically samples the top-left pixel to compute the background color, applying a tolerance-based green-screen keying filter (with feathered edge transparency) in real-time.
+*   **JS-Controlled Walk & Hover Pause**: The mascot walks back and forth across the bottom of the screen. Instead of pure CSS keyframes, walking is computed dynamically in a JS interval updating the `tigerLeft` percentage. This allows the animation to pause smoothly when the user hovers over the mascot (`isHovered` state).
+*   **Persistent Speech & Thought Bubbles**:
+    *   Bubbles are nested inside the mascot container so that they move synchronously with the tiger and maintain perfect legibility regardless of mirroring/flipping.
+    *   Phrases are randomly pulled from separate speech and thought pools.
+    *   Timers for fade-outs are handled in React, pausing and resetting automatically if the user hovers over the mascot.
+
+### 2. Onboarding Tutorial Video (`HelpModal`)
+*   **Video Integration**: The onboarding video (`intro.mp4`) is embedded below the "About" section in `HelpModal.tsx`.
+*   **Path Resolution**: Always resolve the media asset using `import.meta.env.BASE_URL` to ensure it works correctly under both the web development server and Electron's file system protocols.
+*   **Neo-Brutalist Styling**: The video element is styled with solid borders (`border-2 border-black`) and a flat shadow (`shadow-[4px_4px_0px_0px_#000000]`) matching the theme, with a mascot placeholder image (`mascot_logo.png`) as its poster.
+*   **Localized Content**: Titles, descriptions, and labels are stored in the modal's `content` state mapping to enable seamless switching between English and Spanish.
+
+---
+
 ## 🎨 Visual Design Tokens (brandkit Guide)
 
 The workspace frontend uses **Tailwind CSS v4** with a custom **Neo-Brutalist Pop** design system. When modifying elements, strictly use the following variables and design tokens:
