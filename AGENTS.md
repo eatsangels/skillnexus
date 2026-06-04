@@ -91,7 +91,7 @@ A concrete, specialized stateless function. It performs one task with high relia
 *   It installs all dependencies, builds the frontend, and runs `electron-builder --win --publish always`.
 *   The workflow requires `permissions: contents: write` and uses `GH_TOKEN` (not `GITHUB_TOKEN`) for electron-builder.
 *   Artifacts (`.exe`, `.blockmap`, `latest.yml`) are uploaded to GitHub Releases automatically.
-*   **Latest release**: `v1.0.22` — Fix mascot hover pause functionality and sync dialogue box correctly.
+*   **Latest release**: `v1.0.23` — Integrate onboarding intro video tutorial in the HelpModal.
 
 ---
 
