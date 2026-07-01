@@ -1,5 +1,6 @@
-import { exec } from "child_process";
+import { execFile } from "child_process";
 import { generateSpanishDescription } from "./translator.js";
+import { validateInstallInput, isValidRepo } from "./validate.js";
 import { fileURLToPath } from "url";
 import { join, dirname } from "path";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
@@ -107,15 +108,16 @@ function stripAnsi(str) {
   return str.replace(/\u001b\[.*?m/g, "").trim();
 }
 
-// Promisified execution helper
-function executeCommand(command, timeout = 60000) {
+const NPX = "npx";
+
+// Ejecución de npx. En Windows, `npx` es un `.cmd`, así que necesita shell:true para
+// resolverse. La seguridad la garantiza la validación en el llamador: TODOS los valores
+// interpolados (source, slug, query) pasan por allowlist estricta / sanitización antes de
+// llegar aquí, de modo que no pueden contener metacaracteres de shell.
+function executeCommand(file, args, timeout = 60000) {
   return new Promise((resolve) => {
-    exec(command, { timeout, maxBuffer: 10 * 1024 * 1024 }, (error, stdout, stderr) => {
-      if (error) {
-        resolve(stdout || stderr || "");
-      } else {
-        resolve(stdout);
-      }
+    execFile(file, args, { timeout, maxBuffer: 10 * 1024 * 1024, shell: true }, (error, stdout, stderr) => {
+      resolve((stdout || "") + (stderr || ""));
     });
   });
 }
@@ -139,8 +141,13 @@ async function runWithConcurrency(tasks, limit) {
 }
 
 async function fetchSourceSkills(source) {
+  // Validar el repo antes de pasarlo a un proceso externo.
+  if (!isValidRepo(source)) {
+    console.warn(`[Skills-sh] Fuente ignorada por formato inválido: ${source}`);
+    return [];
+  }
   try {
-    const out = await executeCommand(`npx skills add ${source} --list --yes 2>&1`, 90000);
+    const out = await executeCommand(NPX, ["-y", "skills@latest", "add", source, "--list", "--yes"], 90000);
     const clean = stripAnsi(out);
     const lines = clean.split("\n");
     let inSkills = false;
@@ -267,8 +274,15 @@ export async function refreshCatalog() {
 }
 
 export async function searchSkills(query) {
+  // La query es texto libre del usuario. La sanitizamos a un charset seguro (letras, números,
+  // espacios y . _ -) para eliminar cualquier metacaracter de shell antes de pasarla a npx.
+  const q = (typeof query === "string" ? query : "")
+    .slice(0, 100)
+    .replace(/[^A-Za-z0-9 _.-]/g, "")
+    .trim();
+  if (!q) return [];
   try {
-    const out = await executeCommand(`npx skills find "${query}" 2>&1`, 15000);
+    const out = await executeCommand(NPX, ["-y", "skills@latest", "find", `"${q}"`], 15000);
     const clean = stripAnsi(out);
     const results = [];
     const lines = clean.split("\n");
@@ -421,11 +435,20 @@ export async function installSkill(source, slug, targetDir) {
   //    Gemini/Antigravity, OpenCode, Trae, Windsurf, Copilot, Crush, Goose, etc.) y coloca la
   //    skill en la ruta correcta de cada una (una copia canónica en ~/.agents/skills + symlinks).
   //    La ejecutamos desde el home del usuario para que resuelva el ámbito global, no un proyecto.
+  // Validación estricta: source/slug se pasan a un proceso externo. Rechazar cualquier
+  // valor con caracteres de shell o separadores de ruta antes de ejecutar nada.
+  const check = validateInstallInput(source, slug);
+  if (!check.ok) {
+    throw new Error(check.error);
+  }
+
   try {
     const parsedAgents = [];
-    const cmd = `npx -y skills@latest add ${source} --skill ${slug} --global --yes`;
+    // source/slug ya validados con allowlist estricta arriba => sin metacaracteres de shell.
+    // shell:true es necesario en Windows para resolver npx (.cmd); es seguro por la validación.
+    const args = ["-y", "skills@latest", "add", source, "--skill", slug, "--global", "--yes"];
     const stdout = await new Promise((resolve, reject) => {
-      exec(cmd, { cwd: homedir(), timeout: 120000 }, (error, out, stderr) => {
+      execFile(NPX, args, { cwd: homedir(), timeout: 120000, shell: true }, (error, out, stderr) => {
         // El CLI devuelve código 0 aunque algún agente concreto no soporte instalación global;
         // solo tratamos como fallo si no hubo salida útil.
         if (error && !out) {

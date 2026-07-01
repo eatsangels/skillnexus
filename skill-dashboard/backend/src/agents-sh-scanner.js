@@ -1,4 +1,4 @@
-import { exec } from "child_process";
+import { validateInstallInput } from "./validate.js";
 import { fileURLToPath } from "url";
 import { join, dirname } from "path";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
@@ -281,6 +281,10 @@ export async function fetchAgentDetail(source, slug) {
 
 // Download/Install the agent into the local ~/.claude/agents directory
 export async function installAgent(source, slug) {
+  const check = validateInstallInput(source, slug);
+  if (!check.ok) {
+    throw new Error(check.error);
+  }
   const { writeFile, mkdir } = await import("fs/promises");
   const detail = await fetchAgentDetail(source, slug);
 

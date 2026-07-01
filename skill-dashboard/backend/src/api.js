@@ -54,6 +54,11 @@ export function setActivePort(p) {
   activePort = p;
 }
 
+// Gates de features que ejecutan código/comandos. Habilitados por defecto (compatibilidad),
+// pero se pueden desactivar por entorno para despliegues más restrictivos.
+const ALLOW_AGENT_RUN = process.env.SKILLNEXUS_ALLOW_RUN !== "false";
+const ALLOW_LOCAL_REMOTION = process.env.SKILLNEXUS_ALLOW_LOCAL_REMOTION !== "false";
+
 // Endpoint ligero de salud para descubrimiento de puerto y reconexión del frontend/Electron.
 router.get("/health", (_req, res) => {
   res.json({ ok: true, version: appVersion, port: activePort, lastScan });
@@ -143,7 +148,12 @@ router.get("/agents/:name", (req, res) => {
 
 router.post("/agents/:name/run", (req, res) => {
   const { name } = req.params;
-  const { prompt } = req.body;
+  let { prompt } = req.body;
+
+  // Este endpoint ejecuta OpenCode con permisos elevados; se puede deshabilitar por entorno.
+  if (!ALLOW_AGENT_RUN) {
+    return res.status(403).json({ error: "La ejecución de agentes está deshabilitada (SKILLNEXUS_ALLOW_RUN=false)." });
+  }
 
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
@@ -155,6 +165,9 @@ router.post("/agents/:name/run", (req, res) => {
     res.end();
     return;
   }
+
+  // Limitar el tamaño del prompt para evitar abusos.
+  prompt = typeof prompt === "string" ? prompt.slice(0, 8000) : "";
 
   res.write(`data: ${JSON.stringify({ chunk: `> opencode run --agent ${name} "${prompt}"\n\n` })}\n\n`);
 
@@ -478,6 +491,12 @@ router.post("/remotion/login", (req, res) => {
 
 router.post("/remotion/render", async (req, res) => {
   const { code, width = 1920, height = 1080, fps = 30, duration_seconds = 3, mode = "cloud" } = req.body;
+
+  // El modo local escribe y ejecuta código arbitrario (Main.tsx) en la máquina.
+  // Se puede deshabilitar por entorno; el modo nube (por defecto) no se ve afectado.
+  if (mode !== "cloud" && !ALLOW_LOCAL_REMOTION) {
+    return res.status(403).json({ error: "El renderizado local está deshabilitado (SKILLNEXUS_ALLOW_LOCAL_REMOTION=false). Usa el modo nube." });
+  }
 
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
