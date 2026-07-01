@@ -5,7 +5,8 @@ import { CONFIG } from "./config.js";
 
 // Elimina comentarios de JSONC respetando el contenido de las cadenas.
 // El regex ingenuo cortaba URLs (https://...) dentro de strings, rompiendo el parseo.
-function stripJsonComments(text) {
+// Exportado para pruebas unitarias.
+export function stripJsonComments(text) {
   let result = "";
   let inString = false;
   let inLineComment = false;
@@ -55,7 +56,8 @@ function stripJsonComments(text) {
   return result;
 }
 
-function parseJsonc(text) {
+// Exportado para pruebas unitarias.
+export function parseJsonc(text) {
   const noComments = stripJsonComments(text);
   // Elimina comas colgantes (,} o ,]) que JSON.parse no acepta pero JSONC sí.
   const noTrailingCommas = noComments.replace(/,(\s*[}\]])/g, "$1");

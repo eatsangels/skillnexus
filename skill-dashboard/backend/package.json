@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "node --watch src/server.js"
+    "dev": "node --watch src/server.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@vitalets/google-translate-api": "^9.2.1",
@@ -13,5 +15,8 @@
     "cors": "^2.8.5",
     "express": "^4.21.0",
     "gray-matter": "^4.0.3"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.9"
   }
 }
