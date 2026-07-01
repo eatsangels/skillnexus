@@ -48,6 +48,17 @@ let skillsCache = null;
 let agentsCache = null;
 let lastScan = null;
 
+// Puerto real donde quedó escuchando el backend (lo fija server.js tras el fallback de EADDRINUSE).
+let activePort = CONFIG.port;
+export function setActivePort(p) {
+  activePort = p;
+}
+
+// Endpoint ligero de salud para descubrimiento de puerto y reconexión del frontend/Electron.
+router.get("/health", (_req, res) => {
+  res.json({ ok: true, version: appVersion, port: activePort, lastScan });
+});
+
 if (process.on) {
   process.on("message", (msg) => {
     if (msg && msg.type) {

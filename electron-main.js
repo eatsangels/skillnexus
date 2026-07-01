@@ -1,41 +1,97 @@
 const { app, BrowserWindow, Notification, dialog } = require("electron");
 const { fork } = require("child_process");
 const path = require("path");
+const http = require("http");
 const { autoUpdater } = require("electron-updater");
 
 let mainWindow;
 let backendProcess;
+let backendPort = 3001;
+const PORT_MIN = 3001;
+const PORT_MAX = 3021;
 
+// Comprueba si ya hay un backend de SkillNexus vivo en un puerto (evita forkear uno que choque).
+function probeHealth(port) {
+  return new Promise((resolve) => {
+    const req = http.get({ host: "127.0.0.1", port, path: "/api/health", timeout: 500 }, (res) => {
+      let body = "";
+      res.on("data", (c) => (body += c));
+      res.on("end", () => {
+        try {
+          const j = JSON.parse(body);
+          resolve(j && j.ok ? port : null);
+        } catch {
+          resolve(null);
+        }
+      });
+    });
+    req.on("error", () => resolve(null));
+    req.on("timeout", () => { req.destroy(); resolve(null); });
+  });
+}
+
+async function findExistingBackend() {
+  for (let p = PORT_MIN; p <= PORT_MAX; p++) {
+    // eslint-disable-next-line no-await-in-loop
+    const found = await probeHealth(p);
+    if (found) return found;
+  }
+  return null;
+}
+
+// Arranca el backend (o reutiliza uno existente) y resuelve con el puerto activo.
 function startBackend() {
-  // Determine if backend should be loaded from unpacked ASAR folder in production
-  const backendPath = app.isPackaged
-    ? path.join(process.resourcesPath, "app.asar", "skill-dashboard", "backend", "src", "server.js")
-    : path.join(__dirname, "skill-dashboard", "backend", "src", "server.js");
-  // Define NODE_PATH for packaged app so it resolves root node_modules inside app.asar
-  const nodeModulesPath = app.isPackaged
-    ? path.join(process.resourcesPath, "app.asar", "node_modules")
-    : path.join(__dirname, "node_modules");
-
-  // Fork the backend process so it runs in a background Node process
-  backendProcess = fork(backendPath, [], {
-    env: { 
-      ...process.env, 
-      PORT: 3001,
-      NODE_PATH: nodeModulesPath
-    },
-    stdio: "inherit" // Forward console logs to Electron terminal
-  });
-
-  backendProcess.on("exit", (code) => {
-    console.log(`Backend process exited with code ${code}`);
-    backendProcess = null;
-  });
-
-  backendProcess.on("message", (msg) => {
-    if (msg && msg.type === "apply-update") {
-      console.log("[Electron] Applying update requested by backend process...");
-      autoUpdater.quitAndInstall();
+  return new Promise(async (resolve) => {
+    // 1. Reutilizar un backend ya en marcha si existe (p. ej. otra ventana o el modo dev).
+    const existing = await findExistingBackend();
+    if (existing) {
+      console.log(`[Electron] Reusando backend existente en puerto ${existing}`);
+      backendPort = existing;
+      return resolve(existing);
     }
+
+    // 2. Forkear uno nuevo.
+    const backendPath = app.isPackaged
+      ? path.join(process.resourcesPath, "app.asar", "skill-dashboard", "backend", "src", "server.js")
+      : path.join(__dirname, "skill-dashboard", "backend", "src", "server.js");
+    const nodeModulesPath = app.isPackaged
+      ? path.join(process.resourcesPath, "app.asar", "node_modules")
+      : path.join(__dirname, "node_modules");
+
+    backendProcess = fork(backendPath, [], {
+      env: { ...process.env, PORT: String(PORT_MIN), NODE_PATH: nodeModulesPath },
+      stdio: "inherit",
+    });
+
+    let resolved = false;
+    const settle = (port) => {
+      if (!resolved) {
+        resolved = true;
+        backendPort = port;
+        resolve(port);
+      }
+    };
+
+    backendProcess.on("exit", (code) => {
+      console.log(`Backend process exited with code ${code}`);
+      backendProcess = null;
+    });
+
+    backendProcess.on("message", (msg) => {
+      if (!msg || !msg.type) return;
+      if (msg.type === "backend-port") {
+        console.log(`[Electron] Backend escuchando en puerto ${msg.port}`);
+        settle(msg.port);
+      } else if (msg.type === "apply-update") {
+        console.log("[Electron] Applying update requested by backend process...");
+        autoUpdater.quitAndInstall();
+      } else if (msg.type === "backend-error") {
+        console.error("[Electron] Backend no pudo iniciar:", msg.error);
+      }
+    });
+
+    // Salvaguarda: si en 8s no llegó el puerto por IPC, asumir el puerto por defecto.
+    setTimeout(() => settle(PORT_MIN), 8000);
   });
 }
 
@@ -73,8 +129,11 @@ function createWindow() {
     mainWindow.loadURL("http://localhost:5173");
     mainWindow.webContents.openDevTools();
   } else {
-    // Load built production assets
-    mainWindow.loadFile(path.join(__dirname, "skill-dashboard", "frontend", "dist", "index.html"));
+    // Load built production assets, pasando el puerto del backend como query param
+    // para que el frontend (file://) sepa a qué puerto conectarse tras el fallback.
+    mainWindow.loadFile(path.join(__dirname, "skill-dashboard", "frontend", "dist", "index.html"), {
+      query: { port: String(backendPort) },
+    });
   }
 
   mainWindow.on("closed", () => {
@@ -82,10 +141,15 @@ function createWindow() {
   });
 }
 
-app.whenReady().then(() => {
-  // Only spin up a new backend if it's packaged (in dev we run concurrently)
+app.whenReady().then(async () => {
+  // En producción, forkeamos (o reutilizamos) el backend y esperamos su puerto antes de abrir la ventana.
+  // En dev, el backend se levanta aparte (concurrently) en 3001 y el frontend usa el proxy de Vite.
   if (app.isPackaged) {
-    startBackend();
+    try {
+      await startBackend();
+    } catch (err) {
+      console.error("[Electron] Error arrancando backend:", err);
+    }
   }
 
   createWindow();

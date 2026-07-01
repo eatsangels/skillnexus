@@ -2,7 +2,10 @@ import { homedir, userInfo } from "os";
 import { join } from "path";
 
 export const CONFIG = {
-  port: 3001,
+  // Puerto preferido. Si está ocupado, el servidor probará los siguientes hasta portMax.
+  // Se puede forzar con la variable de entorno PORT.
+  port: Number(process.env.PORT) || 3001,
+  portMax: (Number(process.env.PORT) || 3001) + 20,
   scanPaths: {
     globalConfig: join(homedir(), ".config", "opencode", "opencode.jsonc"),
     projectConfigs: [

@@ -83,8 +83,18 @@ $fe = Start-Job -ScriptBlock {
   npx vite
 } -ArgumentList $root
 
-# Esperar arranque
-Start-Sleep -Seconds 3
+# Esperar arranque real del backend (poll a /api/health en vez de un sleep fijo)
+Write-Step "Esperando a que el backend responda..."
+$backendReady = $false
+for ($i = 0; $i -lt 30; $i++) {
+  try {
+    $r = Invoke-WebRequest -Uri "http://localhost:3001/api/health" -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
+    if ($r.StatusCode -eq 200) { $backendReady = $true; break }
+  } catch {
+    Start-Sleep -Milliseconds 500
+  }
+}
+if ($backendReady) { Write-OK "Backend listo" } else { Write-Warn "El backend tardo en responder; abriendo de todos modos" }
 
 # Info
 Write-Host "  +------------------------------------------+" -ForegroundColor DarkGreen

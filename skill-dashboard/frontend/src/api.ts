@@ -1,6 +1,26 @@
-export const BASE = typeof window !== "undefined" && window.location.protocol === "file:"
-  ? "http://localhost:3001/api"
-  : "/api";
+// En la app empaquetada (file://) Electron nos pasa el puerto real del backend como ?port=XXXX
+// (necesario porque el backend puede haber caído al puerto 3002+ si el 3001 estaba ocupado).
+// En modo web (dev) usamos el proxy de Vite en /api.
+function resolveBase(): string {
+  if (typeof window === "undefined") return "/api";
+  if (window.location.protocol === "file:") {
+    const port = new URLSearchParams(window.location.search).get("port") || "3001";
+    return `http://localhost:${port}/api`;
+  }
+  return "/api";
+}
+
+export const BASE = resolveBase();
+
+// Comprueba si el backend responde (para banners de reconexión en la UI).
+export async function checkHealth(): Promise<boolean> {
+  try {
+    const res = await fetch(`${BASE}/health`, { signal: AbortSignal.timeout(4000) });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
 
 export interface SkillSummary {
   name: string;
