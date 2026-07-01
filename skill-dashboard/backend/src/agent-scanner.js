@@ -3,11 +3,63 @@ import { join } from "path";
 import matter from "gray-matter";
 import { CONFIG } from "./config.js";
 
+// Elimina comentarios de JSONC respetando el contenido de las cadenas.
+// El regex ingenuo cortaba URLs (https://...) dentro de strings, rompiendo el parseo.
+function stripJsonComments(text) {
+  let result = "";
+  let inString = false;
+  let inLineComment = false;
+  let inBlockComment = false;
+  let escaped = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    const next = text[i + 1];
+    if (inLineComment) {
+      if (ch === "\n") {
+        inLineComment = false;
+        result += ch;
+      }
+      continue;
+    }
+    if (inBlockComment) {
+      if (ch === "*" && next === "/") {
+        inBlockComment = false;
+        i++;
+      }
+      continue;
+    }
+    if (inString) {
+      result += ch;
+      if (escaped) escaped = false;
+      else if (ch === "\\") escaped = true;
+      else if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+      result += ch;
+      continue;
+    }
+    if (ch === "/" && next === "/") {
+      inLineComment = true;
+      i++;
+      continue;
+    }
+    if (ch === "/" && next === "*") {
+      inBlockComment = true;
+      i++;
+      continue;
+    }
+    result += ch;
+  }
+  return result;
+}
+
 function parseJsonc(text) {
-  const cleaned = text
-    .replace(/\/\/.*$/gm, "")
-    .replace(/\/\*[\s\S]*?\*\//g, "");
-  return JSON.parse(cleaned);
+  const noComments = stripJsonComments(text);
+  // Elimina comas colgantes (,} o ,]) que JSON.parse no acepta pero JSONC sí.
+  const noTrailingCommas = noComments.replace(/,(\s*[}\]])/g, "$1");
+  return JSON.parse(noTrailingCommas);
 }
 
 function readConfigFile(filePath) {
@@ -239,10 +291,21 @@ export function scanAgents() {
   }
   const claudeAgents = scanClaudeAgents();
   for (const agent of claudeAgents) {
-    if (!seenCustom.has(agent.name)) {
-      seenCustom.add(agent.name);
-      agents.push(agent);
+    // Cada archivo en disco es único; no lo descartamos por colisión de `name`.
+    // Si el nombre ya existe, lo desambiguamos con el slug del archivo o un sufijo numérico.
+    let uniqueName = agent.name;
+    if (seenCustom.has(uniqueName)) {
+      const base = (agent.fileSlug || agent.name).toLowerCase().replace(/\s+/g, "-");
+      uniqueName = base;
+      let counter = 2;
+      while (seenCustom.has(uniqueName)) {
+        uniqueName = `${base}-${counter++}`;
+      }
+      agent.name = uniqueName;
+      agent.invocation = `@${uniqueName}`;
     }
+    seenCustom.add(uniqueName);
+    agents.push(agent);
   }
   const BUILTIN_EN_DESCRIPTIONS = {
     build: "Principal coding agent to implement features and fix bugs",
@@ -285,10 +348,11 @@ function scanClaudeAgents() {
     for (const entry of entries) {
       if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
       const filePath = join(dir, entry.name);
+      const fileSlug = entry.name.replace(/\.md$/, "");
       try {
         const content = readFileSync(filePath, "utf-8");
         const parsed = matter(content);
-        const name = parsed.data.name || entry.name.replace(".md", "");
+        const name = parsed.data.name || fileSlug;
         const description = parsed.data.description || "";
         const color = parsed.data.color || null;
         const emoji = parsed.data.emoji || null;
@@ -314,8 +378,37 @@ function scanClaudeAgents() {
           options: { emoji, vibe, filePath },
           category: classifyAgent(agentName + " " + (description || "")),
           invocation: `@${agentName}`,
+          fileSlug,
         });
-      } catch {}
+      } catch (err) {
+        // No descartar silenciosamente un archivo con frontmatter inválido:
+        // lo registramos y creamos una entrada mínima basada en el nombre del archivo
+        // para que siga contando y sea visible (con el error para diagnóstico).
+        console.error(`[Agent-scanner] Failed to parse ${entry.name}:`, err.message);
+        const agentName = fileSlug.toLowerCase().replace(/\s+/g, "-");
+        results.push({
+          name: agentName,
+          displayName: fileSlug,
+          description: "",
+          mode: "primary",
+          native: false,
+          source: "claude",
+          hidden: false,
+          color: null,
+          model: null,
+          variant: null,
+          temperature: null,
+          topP: null,
+          steps: null,
+          tools: null,
+          prompt: null,
+          permission: null,
+          options: { filePath, parseError: err.message },
+          category: classifyAgent(agentName),
+          invocation: `@${agentName}`,
+          fileSlug,
+        });
+      }
     }
   } catch {}
   return results;

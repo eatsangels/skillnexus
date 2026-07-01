@@ -91,7 +91,7 @@ A concrete, specialized stateless function. It performs one task with high relia
 *   It installs all dependencies, builds the frontend, and runs `electron-builder --win --publish always`.
 *   The workflow requires `permissions: contents: write` and uses `GH_TOKEN` (not `GITHUB_TOKEN`) for electron-builder.
 *   Artifacts (`.exe`, `.blockmap`, `latest.yml`) are uploaded to GitHub Releases automatically.
-*   **Latest release**: `v1.0.23` — Integrate onboarding intro video tutorial in the HelpModal.
+*   **Latest release**: `v1.0.25` — Global skill installation (`npx skills add --global`), multi-AI verification UI, URL-safe JSONC parsing, agent/skill name desambiguation/deduplication, and parser error resilience.
 
 ---
 
@@ -107,9 +107,9 @@ A concrete, specialized stateless function. It performs one task with high relia
 *   **Path**: `GET /api/skills-sh` and `POST /api/skills-sh/install`
 *   **Body (Install)**: `{ source: string, slug: string }`
 *   **Flow**:
-    1. Prefer CLI-based installation: Runs `npx -y skills add <source> --skill <slug> --yes`.
+    1. Prefer CLI-based global installation: Runs `npx -y skills add <source> --skill <slug> --global --yes` from the user's home directory. This installs the skill to the canonical path `~/.agents/skills/` and symlinks it to all detected AIs.
     2. Fallback to GitHub Tree Resolution: Queries the GitHub Git Trees API to find the exact relative path of the `SKILL.md` file if folder names do not match the skill slug, downloading it directly to the local skills directory.
-*   **Parser Safety (v1.0.12)**: The scanner parsed global lists using `npx skills add [source] --list`. The regex now uses a robust `\s+` mapping to capture skill names under varying spaces and OS terminal output configurations.
+*   **Parser Safety (v1.0.12+)**: The scanner parses directories robustly. Duplicate skill/agent names are desambiguated with folder/slug-based suffixes rather than discarded. JSONC comments parsing is URL-safe and doesn't break on comments inside strings. Parser exceptions in custom markdown frontmatters are captured gracefully to avoid scanner crashes.
 
 ### 3. Agents.sh Search & Discovery (v1.0.17)
 *   **Paths**:

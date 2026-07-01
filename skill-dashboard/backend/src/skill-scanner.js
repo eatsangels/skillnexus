@@ -1,5 +1,5 @@
 import { readFileSync, readdirSync, existsSync, statSync } from "fs";
-import { join, extname, basename } from "path";
+import { join, extname, basename, dirname } from "path";
 import matter from "gray-matter";
 import AdmZip from "adm-zip";
 import { CONFIG } from "./config.js";
@@ -44,13 +44,23 @@ function parseSkillMd(filePath) {
     const content = readFileSync(filePath, "utf-8");
     const parsed = matter(content);
     return {
-      name: parsed.data.name || basename(filePath.replace("SKILL.md", "")),
+      name: parsed.data.name || basename(dirname(filePath)),
       description: parsed.data.description || "",
       body: parsed.content.trim(),
       data: parsed.data,
     };
-  } catch {
-    return null;
+  } catch (err) {
+    // No descartar silenciosamente una skill con frontmatter inválido:
+    // registramos el error y devolvemos una entrada mínima basada en el
+    // nombre del directorio para que siga contando y sea visible.
+    console.error(`[Skill-scanner] Failed to parse ${filePath}:`, err.message);
+    return {
+      name: basename(dirname(filePath)),
+      description: "",
+      body: "",
+      data: {},
+      parseError: err.message,
+    };
   }
 }
 
@@ -141,6 +151,24 @@ function extractSkillFromZipFile(zipPath) {
   };
 }
 
+// Garantiza un nombre único para la skill sin descartarla por colisión.
+// Cada skill vive en una ubicación única del sistema de archivos, así que
+// usamos el nombre de su carpeta/archivo como base para desambiguar.
+function ensureUniqueSkillName(skill, seen) {
+  if (!seen.has(skill.name)) {
+    seen.add(skill.name);
+    return;
+  }
+  const base = basename(skill.location).replace(/\.skill$/, "") || skill.name;
+  let unique = base;
+  let counter = 2;
+  while (seen.has(unique)) {
+    unique = `${base}-${counter++}`;
+  }
+  seen.add(unique);
+  skill.name = unique;
+}
+
 export function scanSkills() {
   const skills = [];
   const seen = new Set();
@@ -148,8 +176,8 @@ export function scanSkills() {
     const skillDirs = findSkillDirectories(dir);
     for (const skillDir of skillDirs) {
       const skill = extractSkillFromDirectory(skillDir);
-      if (skill && !seen.has(skill.name)) {
-        seen.add(skill.name);
+      if (skill) {
+        ensureUniqueSkillName(skill, seen);
         skills.push(skill);
       }
     }
@@ -157,8 +185,8 @@ export function scanSkills() {
   const skillFiles = findSkillFiles(CONFIG.scanPaths.skillFiles);
   for (const zipPath of skillFiles) {
     const skill = extractSkillFromZipFile(zipPath);
-    if (skill && !seen.has(skill.name)) {
-      seen.add(skill.name);
+    if (skill) {
+      ensureUniqueSkillName(skill, seen);
       skills.push(skill);
     }
   }

@@ -411,38 +411,47 @@ export async function fetchSkillDetail(source, slug) {
 }
 
 export async function installSkill(source, slug, targetDir) {
-  const { mkdir, cp, rm, writeFile } = await import("fs/promises");
+  const { mkdir, writeFile } = await import("fs/promises");
   const { existsSync } = await import("fs");
   const { join } = await import("path");
   const skillDir = join(targetDir, slug);
 
-  // 1. Try installing using `npx skills add`
-  const tempInstallDir = join(targetDir, `_temp_${slug}_${Date.now()}`);
+  // 1. Instalación GLOBAL en TODAS las IAs instaladas mediante `npx skills add --global`.
+  //    Sin `--agent`, el CLI auto-detecta las herramientas presentes (Claude Code, Codex,
+  //    Gemini/Antigravity, OpenCode, Trae, Windsurf, Copilot, Crush, Goose, etc.) y coloca la
+  //    skill en la ruta correcta de cada una (una copia canónica en ~/.agents/skills + symlinks).
+  //    La ejecutamos desde el home del usuario para que resuelva el ámbito global, no un proyecto.
   try {
-    await mkdir(tempInstallDir, { recursive: true });
-    const cmd = `npx -y skills add ${source} --skill ${slug} --yes`;
-    await new Promise((resolve, reject) => {
-      exec(cmd, { cwd: tempInstallDir, timeout: 60000 }, (error, stdout, stderr) => {
-        if (error) {
-          reject(new Error(stdout || stderr || error.message));
+    const parsedAgents = [];
+    const cmd = `npx -y skills@latest add ${source} --skill ${slug} --global --yes`;
+    const stdout = await new Promise((resolve, reject) => {
+      exec(cmd, { cwd: homedir(), timeout: 120000 }, (error, out, stderr) => {
+        // El CLI devuelve código 0 aunque algún agente concreto no soporte instalación global;
+        // solo tratamos como fallo si no hubo salida útil.
+        if (error && !out) {
+          reject(new Error(out || stderr || error.message));
         } else {
-          resolve(stdout);
+          resolve(out || "");
         }
       });
     });
 
-    const downloadedSkillDir = join(tempInstallDir, ".agents", "skills", slug);
-    if (existsSync(downloadedSkillDir)) {
-      await mkdir(skillDir, { recursive: true });
-      await cp(downloadedSkillDir, skillDir, { recursive: true });
-      await rm(tempInstallDir, { recursive: true, force: true });
-      return { path: skillDir, name: slug, method: "cli" };
+    // Extraer la lista "Installing to: A, B, C" para informar al usuario qué IAs recibieron la skill.
+    const match = stdout.match(/Installing to:\s*(.+)/i);
+    if (match) {
+      match[1].split(",").forEach((a) => {
+        const name = a.replace(/\x1b\[[0-9;]*m/g, "").trim();
+        if (name && !/^\+\d+/.test(name)) parsedAgents.push(name);
+      });
+    }
+
+    // Verificar que la skill quedó en al menos una IA (la copia canónica compartida).
+    const canonical = join(homedir(), ".agents", "skills", slug);
+    if (existsSync(canonical) || existsSync(skillDir)) {
+      return { path: canonical, name: slug, method: "cli-global", agents: parsedAgents };
     }
   } catch (err) {
-    console.error("CLI installation failed, falling back to manual fetch:", err);
-    try {
-      await rm(tempInstallDir, { recursive: true, force: true });
-    } catch {}
+    console.error("Global CLI installation failed, falling back to manual fetch:", err);
   }
 
   // 2. Fallback to manual fetch

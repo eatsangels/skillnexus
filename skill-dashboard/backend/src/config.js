@@ -9,6 +9,11 @@ export const CONFIG = {
       join(homedir(), "Documents", "curso-opencode", "opencode.json"),
     ],
     skillDirectories: [
+      // Carpeta canónica compartida por TODAS las IAs (Claude, Codex, OpenCode, Trae, Windsurf,
+      // Gemini/Antigravity, Copilot, Crush, Goose, etc.). `npx skills add --global` instala aquí
+      // una sola copia y la enlaza a cada IA, así que refleja lo instalado en todo el sistema.
+      join(homedir(), ".agents", "skills"),
+      // Carpeta de skills del proyecto OpenCode (compatibilidad con instalaciones previas).
       join(homedir(), "Documents", "curso-opencode", ".opencode", "skills"),
     ],
     skillFiles: [

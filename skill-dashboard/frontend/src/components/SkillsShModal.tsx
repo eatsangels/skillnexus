@@ -13,6 +13,7 @@ export default function SkillsShModal({ skill, onClose, onInstallSuccess }: Prop
   const [detail, setDetail] = useState<SkillsShDetail | null>(null);
   const [installing, setInstalling] = useState(false);
   const [installed, setInstalled] = useState(false);
+  const [installedAgents, setInstalledAgents] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [lang, setLang] = useState<"en" | "es">("es");
 
@@ -27,8 +28,9 @@ export default function SkillsShModal({ skill, onClose, onInstallSuccess }: Prop
     setInstalling(true);
     setError("");
     try {
-      await installSkillsSh(skill.source, skill.slug);
+      const res = await installSkillsSh(skill.source, skill.slug);
       setInstalled(true);
+      setInstalledAgents(res.result?.agents || []);
       if (onInstallSuccess) {
         onInstallSuccess();
       }
@@ -138,7 +140,7 @@ export default function SkillsShModal({ skill, onClose, onInstallSuccess }: Prop
           )}
         </div>
 
-        <div className="p-5 border-t border-surface-700/30 shrink-0">
+        <div className="p-5 border-t border-surface-700/30 shrink-0 space-y-3">
           <button
             onClick={handleInstall}
             disabled={installing || installed}
@@ -148,8 +150,27 @@ export default function SkillsShModal({ skill, onClose, onInstallSuccess }: Prop
                 : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 hover:shadow-emerald-500/30"
             } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
-            {installing ? "Installing..." : installed ? "Installed" : "Install Skill"}
+            {installing
+              ? (lang === "es" ? "Instalando en todas tus IAs..." : "Installing to all your AIs...")
+              : installed
+                ? (lang === "es" ? "Instalada" : "Installed")
+                : (lang === "es" ? "Instalar en todas mis IAs" : "Install to all my AIs")}
           </button>
+
+          {installed && installedAgents.length > 0 && (
+            <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-3">
+              <p className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider mb-2">
+                {lang === "es" ? `Instalada en ${installedAgents.length} IA${installedAgents.length === 1 ? "" : "s"}` : `Installed to ${installedAgents.length} AI${installedAgents.length === 1 ? "" : "s"}`}
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {installedAgents.map((a) => (
+                  <span key={a} className="text-[11px] text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                    {a}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

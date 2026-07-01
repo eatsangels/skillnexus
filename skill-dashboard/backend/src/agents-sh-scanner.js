@@ -288,11 +288,16 @@ export async function installAgent(source, slug) {
     throw new Error("Cannot install agent without prompt content");
   }
 
-  // Re-build markdown content with frontmatter
+  // Re-build markdown content with frontmatter.
+  // Usamos JSON.stringify para producir cadenas YAML válidas: escapa comillas,
+  // barras invertidas y saltos de línea. Sin esto, descripciones con `"` o `:`
+  // generaban YAML inválido y el agente instalado nunca volvía a contarse.
+  const yamlName = JSON.stringify(detail.name || slug);
+  const yamlDesc = JSON.stringify(detail.descriptionEn || detail.description || "");
   const frontmatter = [
     "---",
-    `name: ${detail.name}`,
-    `description: "${detail.descriptionEn || detail.description}"`,
+    `name: ${yamlName}`,
+    `description: ${yamlDesc}`,
     "---",
     "",
     detail.prompt

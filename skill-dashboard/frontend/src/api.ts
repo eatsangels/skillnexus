@@ -180,7 +180,14 @@ export async function fetchSkillsShDetail(source: string, slug: string): Promise
   return res.json();
 }
 
-export async function installSkillsSh(source: string, slug: string): Promise<{ success: boolean; result: unknown }> {
+export interface SkillInstallResult {
+  path?: string;
+  name?: string;
+  method?: string;
+  agents?: string[];
+}
+
+export async function installSkillsSh(source: string, slug: string): Promise<{ success: boolean; result: SkillInstallResult }> {
   const res = await fetch(`${BASE}/skills-sh/install`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
