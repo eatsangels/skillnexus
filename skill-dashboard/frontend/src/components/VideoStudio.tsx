@@ -77,6 +77,29 @@ export default function Main() {
 
 import { REMOTION_TEMPLATES } from "./templates";
 import TemplateLibraryModal from "./TemplateLibraryModal";
+import Editor from "@monaco-editor/react";
+import LivePreview from "./LivePreview";
+
+// Presets de formato/plataforma para acelerar la configuración de dimensiones.
+const FORMAT_PRESETS: { label: string; icon: string; w: number; h: number }[] = [
+  { label: "Horizontal 16:9", icon: "🖥️", w: 1920, h: 1080 },
+  { label: "Vertical 9:16", icon: "📱", w: 1080, h: 1920 },
+  { label: "Cuadrado 1:1", icon: "🟩", w: 1080, h: 1080 },
+  { label: "Story 9:16", icon: "📸", w: 1080, h: 1920 },
+  { label: "HD 720p", icon: "🎬", w: 1280, h: 720 },
+  { label: "4K", icon: "✨", w: 3840, h: 2160 },
+];
+
+// Persistencia del proyecto (código + ajustes) para no perder el trabajo al recargar.
+const STORAGE_KEY = "skillnexus-video-project";
+function loadProject() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
 
 // Helper to process logs, strip ANSI escape codes, and collapse progress updates in-place
 const getProcessedLogs = (rawLogs: string[]): string[] => {
@@ -128,12 +151,15 @@ const getProcessedLogs = (rawLogs: string[]): string[] => {
 };
 
 export default function VideoStudio({ base }: Props) {
-  const [code, setCode] = useState(DEFAULT_CODE);
+  const saved = loadProject();
+  const [code, setCode] = useState<string>(saved?.code ?? DEFAULT_CODE);
   const [mode, setMode] = useState<"cloud" | "local">("local");
-  const [width, setWidth] = useState(1920);
-  const [height, setHeight] = useState(1080);
-  const [fps, setFps] = useState(30);
-  const [duration, setDuration] = useState(3);
+  const [width, setWidth] = useState<number>(saved?.width ?? 1920);
+  const [height, setHeight] = useState<number>(saved?.height ?? 1080);
+  const [fps, setFps] = useState<number>(saved?.fps ?? 30);
+  const [duration, setDuration] = useState<number>(saved?.duration ?? 3);
+  const [previewMode, setPreviewMode] = useState<"live" | "rendered">("live");
+  const [outputFormat, setOutputFormat] = useState<"mp4" | "webm" | "gif">(saved?.outputFormat ?? "mp4");
   const [isRendering, setIsRendering] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
@@ -151,6 +177,18 @@ export default function VideoStudio({ base }: Props) {
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [logs]);
+
+  // Persistir el proyecto (código + ajustes) con un pequeño debounce.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ code, width, height, fps, duration, outputFormat }));
+      } catch {
+        // ignorar errores de cuota de localStorage
+      }
+    }, 500);
+    return () => clearTimeout(t);
+  }, [code, width, height, fps, duration, outputFormat]);
 
   // Check auth status
   const checkAuth = async () => {
@@ -285,7 +323,7 @@ export default function VideoStudio({ base }: Props) {
       const response = await fetch(`${base}/remotion/render`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, width, height, fps, duration_seconds: duration, mode })
+        body: JSON.stringify({ code, width, height, fps, duration_seconds: duration, mode, format: outputFormat })
       });
 
       if (!response.body) throw new Error("No response body");
@@ -313,10 +351,12 @@ export default function VideoStudio({ base }: Props) {
                 setIsRendering(false);
                 if (data.code === 0) {
                   if (data.localVideo) {
-                    setVideoUrl(`${base}/remotion/video?t=${Date.now()}`);
+                    setVideoUrl(`${base}/remotion/video?format=${data.format || outputFormat}&t=${Date.now()}`);
+                    setPreviewMode("rendered");
                     setLogs((prev) => [...prev, `\n✓ ¡Renderizado completado con éxito! Cargando video local...\n`]);
                   } else if (data.videoUrl) {
                     setVideoUrl(data.videoUrl);
+                    setPreviewMode("rendered");
                     setLogs((prev) => [...prev, `\n✓ ¡Renderizado completado con éxito!\nURL del Video: ${data.videoUrl}\n`]);
                   }
                 } else {
@@ -416,6 +456,31 @@ export default function VideoStudio({ base }: Props) {
             </div>
           )}
 
+          {/* Presets de formato/plataforma */}
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-semibold text-surface-400">Formato rápido</label>
+            <div className="flex flex-wrap gap-2">
+              {FORMAT_PRESETS.map((p) => {
+                const active = width === p.w && height === p.h;
+                return (
+                  <button
+                    key={p.label}
+                    type="button"
+                    onClick={() => { setWidth(p.w); setHeight(p.h); }}
+                    className={`text-[11px] font-semibold px-2.5 py-1.5 rounded-lg border transition-all cursor-pointer ${
+                      active
+                        ? "bg-brand-600 text-white border-brand-500"
+                        : "bg-surface-900 text-surface-300 border-surface-800 hover:border-brand-500/50"
+                    }`}
+                    title={`${p.w}×${p.h}`}
+                  >
+                    {p.icon} {p.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Formulario de Ajustes */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="flex flex-col gap-1.5">
@@ -436,7 +501,10 @@ export default function VideoStudio({ base }: Props) {
                 onChange={(e) => setFps(Number(e.target.value))}
                 className="bg-surface-900 border border-surface-700/50 focus:border-brand-500/50 rounded-xl px-3 py-2 text-sm text-surface-200 focus:outline-none cursor-pointer"
               >
+                <option value={24}>24 FPS (cine)</option>
+                <option value={25}>25 FPS (PAL)</option>
                 <option value={30}>30 FPS</option>
+                <option value={50}>50 FPS</option>
                 <option value={60}>60 FPS</option>
               </select>
             </div>
@@ -458,6 +526,28 @@ export default function VideoStudio({ base }: Props) {
                 className="bg-surface-900 border border-surface-700/50 focus:border-brand-500/50 rounded-xl px-3 py-2 text-sm text-surface-200 focus:outline-none"
               />
             </div>
+          </div>
+
+          {/* Formato de salida */}
+          <div className="flex items-center gap-3">
+            <label className="text-xs font-semibold text-surface-400">Formato de salida</label>
+            <div className="flex gap-1 bg-surface-900 border border-surface-800 rounded-xl p-1">
+              {(["mp4", "webm", "gif"] as const).map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setOutputFormat(f)}
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold uppercase transition-all cursor-pointer ${
+                    outputFormat === f ? "bg-brand-600 text-white" : "text-surface-400 hover:text-surface-200"
+                  }`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+            <span className="text-[10px] text-surface-500">
+              {outputFormat === "gif" ? "GIF animado (sin audio)" : outputFormat === "webm" ? "WebM (VP8/VP9)" : "MP4 (H.264)"}
+            </span>
           </div>
 
           {/* Editor de código */}
@@ -495,12 +585,24 @@ export default function VideoStudio({ base }: Props) {
                 </select>
               </div>
             </div>
-            <div className="relative flex-1 rounded-xl border border-surface-700/50 overflow-hidden bg-surface-975">
-              <textarea
+            <div className="relative flex-1 rounded-xl border border-surface-700/50 overflow-hidden bg-surface-975 min-h-[350px]">
+              <Editor
+                height="100%"
+                defaultLanguage="typescript"
+                theme="vs-dark"
                 value={code}
-                onChange={(e) => setCode(e.target.value)}
-                className="w-full h-full p-4 bg-transparent text-xs font-mono text-violet-200 placeholder-surface-600 focus:outline-none resize-none leading-relaxed"
-                spellCheck={false}
+                onChange={(value) => setCode(value ?? "")}
+                options={{
+                  fontSize: 12,
+                  minimap: { enabled: false },
+                  scrollBeyondLastLine: false,
+                  wordWrap: "on",
+                  tabSize: 2,
+                  automaticLayout: true,
+                  padding: { top: 12, bottom: 12 },
+                  fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                }}
+                loading={<div className="w-full h-full flex items-center justify-center text-surface-500 text-xs">Cargando editor…</div>}
               />
             </div>
           </div>
@@ -533,22 +635,47 @@ export default function VideoStudio({ base }: Props) {
       <div className="xl:col-span-5 flex flex-col gap-6">
         {/* Previsualización del Video */}
         <div className="bg-surface-950/80 backdrop-blur-sm rounded-2xl border border-surface-800/60 p-6 flex flex-col gap-5">
-          <h3 className="text-lg font-bold text-surface-100 flex items-center gap-2 border-b border-surface-800/40 pb-4">
-            <svg className="w-5 h-5 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
-            </svg>
-            Previsualización
-          </h3>
+          <div className="flex items-center justify-between border-b border-surface-800/40 pb-4">
+            <h3 className="text-lg font-bold text-surface-100 flex items-center gap-2">
+              <svg className="w-5 h-5 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+              </svg>
+              Previsualización
+            </h3>
+            <div className="flex gap-1 bg-surface-900 border border-surface-800 rounded-xl p-1">
+              <button
+                onClick={() => setPreviewMode("live")}
+                className={`px-3 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${previewMode === "live" ? "bg-brand-600 text-white" : "text-surface-400 hover:text-surface-200"}`}
+                title="Previsualización en tiempo real (sin renderizar)"
+              >
+                ⚡ En vivo
+              </button>
+              <button
+                onClick={() => setPreviewMode("rendered")}
+                disabled={!videoUrl}
+                className={`px-3 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${previewMode === "rendered" ? "bg-brand-600 text-white" : "text-surface-400 hover:text-surface-200"}`}
+                title="Video renderizado (MP4/WebM/GIF)"
+              >
+                🎬 Renderizado
+              </button>
+            </div>
+          </div>
 
           <div className="aspect-video bg-surface-975 rounded-xl border border-surface-800 overflow-hidden flex items-center justify-center relative">
-            {videoUrl ? (
-              <video
-                src={videoUrl}
-                controls
-                className="w-full h-full object-contain"
-                autoPlay
-                loop
-              />
+            {previewMode === "live" ? (
+              <LivePreview code={code} width={width} height={height} fps={fps} duration={duration} />
+            ) : videoUrl ? (
+              outputFormat === "gif" ? (
+                <img src={videoUrl} alt="GIF renderizado" className="w-full h-full object-contain" />
+              ) : (
+                <video
+                  src={videoUrl}
+                  controls
+                  className="w-full h-full object-contain"
+                  autoPlay
+                  loop
+                />
+              )
             ) : (
               <div className="text-center p-6 space-y-3">
                 {isRendering ? (
@@ -565,8 +692,8 @@ export default function VideoStudio({ base }: Props) {
                     <svg className="w-12 h-12 text-surface-600 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
-                    <p className="text-sm font-medium text-surface-400">Sin video cargado</p>
-                    <p className="text-xs text-surface-500">Completa un renderizado para ver y guardar el video.</p>
+                    <p className="text-sm font-medium text-surface-400">Sin video renderizado</p>
+                    <p className="text-xs text-surface-500">Usa "En vivo" para ver mientras editas, o renderiza para exportar.</p>
                   </>
                 )}
               </div>
@@ -577,7 +704,7 @@ export default function VideoStudio({ base }: Props) {
             <div className="flex gap-3">
               <a
                 href={videoUrl}
-                download="remotion-video.mp4"
+                download={`remotion-video.${outputFormat}`}
                 target="_blank"
                 rel="noreferrer"
                 className="flex-1 bg-surface-800 hover:bg-surface-700 text-surface-200 border border-surface-700/60 font-semibold py-2.5 rounded-xl transition-all cursor-pointer text-center text-xs flex items-center justify-center gap-1.5"
@@ -585,7 +712,7 @@ export default function VideoStudio({ base }: Props) {
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
-                Descargar Video MP4
+                Descargar {outputFormat.toUpperCase()}
               </a>
             </div>
           )}

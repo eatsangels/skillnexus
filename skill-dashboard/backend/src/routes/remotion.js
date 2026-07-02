@@ -84,7 +84,9 @@ router.post("/login", (req, res) => {
 });
 
 router.post("/render", async (req, res) => {
-  const { code, width = 1920, height = 1080, fps = 30, duration_seconds = 3, mode = "cloud" } = req.body;
+  const { code, width = 1920, height = 1080, fps = 30, duration_seconds = 3, mode = "cloud", format = "mp4" } = req.body;
+  // Extensión de salida validada (mp4 por defecto). Remotion infiere el codec de la extensión.
+  const ext = ["mp4", "webm", "gif"].includes(format) ? format : "mp4";
 
   if (mode !== "cloud" && !ALLOW_LOCAL_REMOTION) {
     return res.status(403).json({ error: "El renderizado local está deshabilitado (SKILLNEXUS_ALLOW_LOCAL_REMOTION=false). Usa el modo nube." });
@@ -256,8 +258,9 @@ registerRoot(Root);
 `;
       writeFileSync(join(tempDir, "index.tsx"), entryContent);
 
-      res.write(`data: ${JSON.stringify({ chunk: `> npx remotion render index.tsx main output.mp4 --overwrite\n` })}\n\n`);
-      const renderChild = spawn("npx", ["remotion", "render", "index.tsx", "main", "output.mp4", "--overwrite"], {
+      const outFile = `output.${ext}`;
+      res.write(`data: ${JSON.stringify({ chunk: `> npx remotion render index.tsx main ${outFile} --overwrite\n` })}\n\n`);
+      const renderChild = spawn("npx", ["remotion", "render", "index.tsx", "main", outFile, "--overwrite"], {
         cwd: tempDir,
         shell: true,
       });
@@ -271,7 +274,7 @@ registerRoot(Root);
       });
 
       renderChild.on("close", (code) => {
-        res.write(`data: ${JSON.stringify({ done: true, code, localVideo: true })}\n\n`);
+        res.write(`data: ${JSON.stringify({ done: true, code, localVideo: true, format: ext })}\n\n`);
         res.end();
       });
 
@@ -287,7 +290,8 @@ registerRoot(Root);
 });
 
 router.get("/video", (req, res) => {
-  const videoPath = join(ROOT, ".temp_remotion", "output.mp4");
+  const ext = ["mp4", "webm", "gif"].includes(req.query.format) ? req.query.format : "mp4";
+  const videoPath = join(ROOT, ".temp_remotion", `output.${ext}`);
   if (existsSync(videoPath)) {
     res.sendFile(videoPath);
   } else {
