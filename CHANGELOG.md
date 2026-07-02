@@ -4,6 +4,13 @@ Todos los cambios notables de SkillNexus se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.0.0/)
 y el proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
+## [1.0.28] - 2026-07-02
+
+### Corregido
+- Video Studio: React error #130 ("Element type is invalid ... got: object") al abrir
+  la pestaña. Causado por la interop del import CJS de `react-simple-code-editor`; se
+  desenvuelve el `default` de forma robusta. Verificado con Playwright.
+
 ## [1.0.27] - 2026-07-02
 
 ### Añadido (Video Studio)

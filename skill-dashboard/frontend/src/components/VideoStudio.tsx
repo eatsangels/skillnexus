@@ -77,7 +77,12 @@ export default function Main() {
 
 import { REMOTION_TEMPLATES } from "./templates";
 import TemplateLibraryModal from "./TemplateLibraryModal";
-import CodeEditor from "react-simple-code-editor";
+import CodeEditorImport from "react-simple-code-editor";
+// Interop robusta: según cómo el bundler resuelva este módulo CJS, el import puede llegar
+// como el componente (forwardRef) o envuelto en { default: ... }. Desenvolvemos para evitar
+// renderizar un objeto (React error #130 "Element type is invalid ... got: object").
+const CodeEditor = ((CodeEditorImport as unknown as { default?: unknown })?.default ??
+  CodeEditorImport) as typeof CodeEditorImport;
 import { highlight, languages } from "prismjs/components/prism-core";
 import "prismjs/components/prism-clike";
 import "prismjs/components/prism-markup";
