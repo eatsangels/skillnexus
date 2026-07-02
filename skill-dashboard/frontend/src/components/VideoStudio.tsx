@@ -77,7 +77,15 @@ export default function Main() {
 
 import { REMOTION_TEMPLATES } from "./templates";
 import TemplateLibraryModal from "./TemplateLibraryModal";
-import Editor from "@monaco-editor/react";
+import CodeEditor from "react-simple-code-editor";
+import { highlight, languages } from "prismjs/components/prism-core";
+import "prismjs/components/prism-clike";
+import "prismjs/components/prism-markup";
+import "prismjs/components/prism-javascript";
+import "prismjs/components/prism-jsx";
+import "prismjs/components/prism-typescript";
+import "prismjs/components/prism-tsx";
+import "prismjs/themes/prism-tomorrow.css";
 import LivePreview from "./LivePreview";
 
 // Presets de formato/plataforma para acelerar la configuración de dimensiones.
@@ -585,24 +593,20 @@ export default function VideoStudio({ base }: Props) {
                 </select>
               </div>
             </div>
-            <div className="relative flex-1 rounded-xl border border-surface-700/50 overflow-hidden bg-surface-975 min-h-[350px]">
-              <Editor
-                height="100%"
-                defaultLanguage="typescript"
-                theme="vs-dark"
+            <div className="relative flex-1 rounded-xl border border-surface-700/50 overflow-auto bg-surface-975 min-h-[350px]">
+              <CodeEditor
                 value={code}
-                onChange={(value) => setCode(value ?? "")}
-                options={{
-                  fontSize: 12,
-                  minimap: { enabled: false },
-                  scrollBeyondLastLine: false,
-                  wordWrap: "on",
-                  tabSize: 2,
-                  automaticLayout: true,
-                  padding: { top: 12, bottom: 12 },
+                onValueChange={(value) => setCode(value)}
+                highlight={(c) => highlight(c, languages.tsx || languages.jsx || languages.javascript, "tsx")}
+                padding={16}
+                textareaClassName="focus:outline-none"
+                style={{
                   fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                  fontSize: 12,
+                  lineHeight: 1.6,
+                  minHeight: "100%",
+                  color: "#e2e8f0",
                 }}
-                loading={<div className="w-full h-full flex items-center justify-center text-surface-500 text-xs">Cargando editor…</div>}
               />
             </div>
           </div>
