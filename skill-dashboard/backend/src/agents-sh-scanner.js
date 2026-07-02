@@ -1,4 +1,5 @@
 import { validateInstallInput, isValidSlug } from "./validate.js";
+import { githubFetch } from "./github.js";
 import { fileURLToPath } from "url";
 import { join, dirname } from "path";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
@@ -80,9 +81,7 @@ async function fetchRepoAgents(source) {
 
   for (const branch of branches) {
     try {
-      const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`, {
-        headers: { "User-Agent": "Mozilla/5.0" }
-      });
+      const res = await githubFetch(`https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`);
       if (res.ok) {
         treeData = await res.json();
         activeBranch = branch;

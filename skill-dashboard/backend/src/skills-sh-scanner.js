@@ -1,6 +1,7 @@
 import { execFile } from "child_process";
 import { generateSpanishDescription } from "./translator.js";
 import { validateInstallInput, isValidRepo, isValidSlug } from "./validate.js";
+import { githubFetch } from "./github.js";
 import { fileURLToPath } from "url";
 import { join, dirname } from "path";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
@@ -313,9 +314,7 @@ async function findAndFetchSkillMd(owner, repo, slug) {
   const branches = ["main", "master"];
   for (const branch of branches) {
     try {
-      const treeRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`, {
-        headers: { "User-Agent": "Mozilla/5.0" }
-      });
+      const treeRes = await githubFetch(`https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`);
       if (treeRes.ok) {
         const data = await treeRes.json();
         if (data && data.tree) {
