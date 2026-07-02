@@ -4,7 +4,7 @@ Todos los cambios notables de SkillNexus se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.0.0/)
 y el proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
-## [Sin publicar]
+## [1.0.26] - 2026-07-02
 
 ### Añadido
 - **Estabilidad (P0):** el backend maneja `EADDRINUSE` y prueba puertos 3001–3021;
