@@ -4,6 +4,14 @@ Todos los cambios notables de SkillNexus se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.0.0/)
 y el proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
+## [1.0.31] - 2026-07-02
+
+### Corregido (Video Studio)
+- **El editor seguía viéndose negro** en la app empaquetada (el resaltado con
+  react-simple-code-editor + Prism no mostraba el texto en el bundle de producción).
+  Se reemplaza por un editor de texto simple con letra clara sobre fondo oscuro, que
+  garantiza que el código sea siempre visible y editable. Verificado en build de producción.
+
 ## [1.0.30] - 2026-07-02
 
 ### Corregido (Video Studio)

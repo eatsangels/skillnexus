@@ -77,17 +77,6 @@ export default function Main() {
 
 import { REMOTION_TEMPLATES } from "./templates";
 import TemplateLibraryModal from "./TemplateLibraryModal";
-import CodeEditorImport from "react-simple-code-editor";
-// Interop robusta: según cómo el bundler resuelva este módulo CJS, el import puede llegar
-// como el componente (forwardRef) o envuelto en { default: ... }. Desenvolvemos para evitar
-// renderizar un objeto (React error #130 "Element type is invalid ... got: object").
-const CodeEditor = ((CodeEditorImport as unknown as { default?: unknown })?.default ??
-  CodeEditorImport) as typeof CodeEditorImport;
-import Prism from "prismjs";
-import "prismjs/components/prism-jsx";
-import "prismjs/components/prism-typescript";
-import "prismjs/components/prism-tsx";
-import "prismjs/themes/prism-tomorrow.css";
 import LivePreview from "./LivePreview";
 
 // Presets de formato/plataforma para acelerar la configuración de dimensiones.
@@ -595,20 +584,15 @@ export default function VideoStudio({ base }: Props) {
                 </select>
               </div>
             </div>
-            <div className="relative flex-1 rounded-xl border border-surface-700/50 overflow-auto bg-surface-975 min-h-[350px]">
-              <CodeEditor
+            <div className="relative flex-1 rounded-xl border border-surface-700/50 overflow-hidden bg-surface-975 min-h-[350px]">
+              <textarea
                 value={code}
-                onValueChange={(value) => setCode(value)}
-                highlight={(c) => Prism.highlight(c, Prism.languages.tsx || Prism.languages.jsx || Prism.languages.javascript || Prism.languages.markup, "tsx")}
-                padding={16}
-                textareaClassName="focus:outline-none"
-                style={{
-                  fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-                  fontSize: 12,
-                  lineHeight: 1.6,
-                  minHeight: "100%",
-                  color: "#e2e8f0",
-                }}
+                onChange={(e) => setCode(e.target.value)}
+                spellCheck={false}
+                autoCapitalize="off"
+                autoCorrect="off"
+                className="w-full h-full min-h-[350px] p-4 bg-transparent text-[13px] leading-relaxed font-mono text-slate-100 placeholder-surface-600 focus:outline-none resize-none"
+                style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace", tabSize: 2 }}
               />
             </div>
           </div>
