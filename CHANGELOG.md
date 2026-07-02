@@ -4,6 +4,14 @@ Todos los cambios notables de SkillNexus se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.0.0/)
 y el proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
+## [1.0.29] - 2026-07-02
+
+### Corregido
+- Auto-updater: el banner de "actualización descargada / instalar" no aparecía porque,
+  al reutilizar un backend existente (P0), `backendProcess` quedaba en null y los eventos
+  del updater no llegaban por IPC. Ahora el backend SIEMPRE se forkea (el conflicto de
+  puerto lo resuelve el fallback de EADDRINUSE), restaurando el flujo de updates por IPC.
+
 ## [1.0.28] - 2026-07-02
 
 ### Corregido

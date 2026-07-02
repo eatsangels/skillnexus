@@ -1,56 +1,20 @@
 const { app, BrowserWindow, Notification, dialog } = require("electron");
 const { fork } = require("child_process");
 const path = require("path");
-const http = require("http");
 const { autoUpdater } = require("electron-updater");
 
 let mainWindow;
 let backendProcess;
 let backendPort = 3001;
 const PORT_MIN = 3001;
-const PORT_MAX = 3021;
 
-// Comprueba si ya hay un backend de SkillNexus vivo en un puerto (evita forkear uno que choque).
-function probeHealth(port) {
-  return new Promise((resolve) => {
-    const req = http.get({ host: "127.0.0.1", port, path: "/api/health", timeout: 500 }, (res) => {
-      let body = "";
-      res.on("data", (c) => (body += c));
-      res.on("end", () => {
-        try {
-          const j = JSON.parse(body);
-          resolve(j && j.ok ? port : null);
-        } catch {
-          resolve(null);
-        }
-      });
-    });
-    req.on("error", () => resolve(null));
-    req.on("timeout", () => { req.destroy(); resolve(null); });
-  });
-}
-
-async function findExistingBackend() {
-  for (let p = PORT_MIN; p <= PORT_MAX; p++) {
-    // eslint-disable-next-line no-await-in-loop
-    const found = await probeHealth(p);
-    if (found) return found;
-  }
-  return null;
-}
-
-// Arranca el backend (o reutiliza uno existente) y resuelve con el puerto activo.
+// Arranca el backend y resuelve con el puerto activo.
+// SIEMPRE forkeamos (no reutilizamos un backend externo): así `backendProcess` está
+// disponible y el flujo de actualizaciones por IPC (banner "descargando"/"instalar" y
+// quitAndInstall) funciona de forma fiable. El conflicto de puerto lo resuelve el backend
+// con su fallback de EADDRINUSE (elige 3002, 3003, ...) y nos comunica el puerto por IPC.
 function startBackend() {
-  return new Promise(async (resolve) => {
-    // 1. Reutilizar un backend ya en marcha si existe (p. ej. otra ventana o el modo dev).
-    const existing = await findExistingBackend();
-    if (existing) {
-      console.log(`[Electron] Reusando backend existente en puerto ${existing}`);
-      backendPort = existing;
-      return resolve(existing);
-    }
-
-    // 2. Forkear uno nuevo.
+  return new Promise((resolve) => {
     const backendPath = app.isPackaged
       ? path.join(process.resourcesPath, "app.asar", "skill-dashboard", "backend", "src", "server.js")
       : path.join(__dirname, "skill-dashboard", "backend", "src", "server.js");
