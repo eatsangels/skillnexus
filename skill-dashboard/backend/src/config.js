@@ -1,5 +1,8 @@
 import { homedir, userInfo } from "os";
 import { join } from "path";
+import { loadSettings } from "./settings.js";
+
+const settings = loadSettings();
 
 export const CONFIG = {
   // Puerto preferido. Si está ocupado, el servidor probará los siguientes hasta portMax.
@@ -17,8 +20,13 @@ export const CONFIG = {
       // una sola copia y la enlaza a cada IA, así que refleja lo instalado en todo el sistema.
       join(homedir(), ".agents", "skills"),
       // Carpeta de skills del proyecto OpenCode (compatibilidad con instalaciones previas).
+      // Se escanea solo si existe, así que es inofensiva en máquinas sin ella.
       join(homedir(), "Documents", "curso-opencode", ".opencode", "skills"),
+      // Directorios extra configurables por el usuario (ajustes).
+      ...(settings.extraSkillDirs || []),
     ],
+    // Carpeta destino para la copia local al instalar (configurable; por defecto la canónica).
+    skillInstallDir: settings.skillInstallDir || join(homedir(), ".agents", "skills"),
     skillFiles: [
       join(homedir(), "Documents", "curso-opencode"),
       join(homedir(), "Documents", "mu02", "mu02"),

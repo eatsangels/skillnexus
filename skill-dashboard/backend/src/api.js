@@ -7,6 +7,7 @@ import { getAgentsCatalog, refreshAgentsCatalog, searchAgents, fetchAgentDetail,
 import { homedir } from "os";
 import { join, dirname } from "path";
 import { CONFIG } from "./config.js";
+import { loadSettings, saveSettings, SETTINGS_PATH } from "./settings.js";
 import remotionRouter from "./routes/remotion.js";
 import { watch, existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync, statSync, unlinkSync } from "fs";
 import { fileURLToPath } from "url";
@@ -297,7 +298,7 @@ router.post("/skills-sh/install", async (req, res) => {
   try {
     const { source, slug } = req.body;
     if (!source || !slug) return res.status(400).json({ error: "source and slug required" });
-    const targetDir = join(homedir(), "Documents", "curso-opencode", ".opencode", "skills");
+    const targetDir = CONFIG.scanPaths.skillInstallDir;
     const result = await installSkill(source, slug, targetDir);
 
     // Actualizar el cache local del backend e informar al frontend mediante SSE de inmediato
@@ -313,7 +314,7 @@ router.post("/skills-sh/install", async (req, res) => {
 // Desinstala una skill de todas las IAs.
 router.delete("/skills-sh/:slug", async (req, res) => {
   try {
-    const targetDir = join(homedir(), "Documents", "curso-opencode", ".opencode", "skills");
+    const targetDir = CONFIG.scanPaths.skillInstallDir;
     const result = await uninstallSkill(req.params.slug, targetDir);
     scan();
     broadcast("update", { lastScan });
@@ -377,6 +378,37 @@ router.delete("/agents/:name", async (req, res) => {
     scan();
     broadcast("update", { lastScan });
     res.json({ success: true, result });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Ajustes de usuario (token de GitHub, rutas). El token nunca se devuelve en claro.
+router.get("/settings", (_req, res) => {
+  const s = loadSettings();
+  res.json({
+    skillInstallDir: s.skillInstallDir,
+    extraSkillDirs: s.extraSkillDirs || [],
+    hasGithubToken: Boolean(s.githubToken),
+    settingsPath: SETTINGS_PATH,
+  });
+});
+
+router.post("/settings", (req, res) => {
+  try {
+    const patch = {};
+    if (typeof req.body.skillInstallDir === "string") patch.skillInstallDir = req.body.skillInstallDir;
+    if (Array.isArray(req.body.extraSkillDirs)) patch.extraSkillDirs = req.body.extraSkillDirs.filter((d) => typeof d === "string");
+    if (typeof req.body.githubToken === "string") patch.githubToken = req.body.githubToken.trim();
+    const next = saveSettings(patch);
+    res.json({
+      success: true,
+      settings: {
+        skillInstallDir: next.skillInstallDir,
+        extraSkillDirs: next.extraSkillDirs || [],
+        hasGithubToken: Boolean(next.githubToken),
+      },
+    });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

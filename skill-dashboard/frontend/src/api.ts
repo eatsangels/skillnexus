@@ -146,6 +146,29 @@ export async function fetchDashboard(): Promise<{ stats: DashboardStats; version
   }
 }
 
+export interface AppSettings {
+  skillInstallDir: string;
+  extraSkillDirs: string[];
+  hasGithubToken: boolean;
+  settingsPath?: string;
+}
+
+export async function fetchSettings(): Promise<AppSettings> {
+  const res = await fetch(`${BASE}/settings`);
+  if (!res.ok) throw new Error("No se pudo cargar la configuración");
+  return res.json();
+}
+
+export async function saveSettings(patch: Partial<{ skillInstallDir: string; extraSkillDirs: string[]; githubToken: string }>): Promise<{ success: boolean }> {
+  const res = await fetch(`${BASE}/settings`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(patch),
+  });
+  if (!res.ok) throw new Error("No se pudo guardar la configuración");
+  return res.json();
+}
+
 export interface SkillsShSkill {
   id: string;
   name: string;

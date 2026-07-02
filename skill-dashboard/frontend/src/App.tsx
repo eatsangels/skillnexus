@@ -12,6 +12,7 @@ import SkillsShModal from "./components/SkillsShModal.tsx";
 import AgentsShCard from "./components/AgentsShCard.tsx";
 import AgentsShModal from "./components/AgentsShModal.tsx";
 import HelpModal from "./components/HelpModal.tsx";
+import SettingsModal from "./components/SettingsModal.tsx";
 // Carga diferida: Video Studio (Remotion) es pesado y no se usa en el arranque.
 const VideoStudio = lazy(() => import("./components/VideoStudio.tsx"));
 
@@ -82,6 +83,7 @@ export default function App() {
   const [version, setVersion] = useState("1.0.7");
   const [updateState, setUpdateState] = useState<{ status: string; version?: string | null; error?: string | null }>({ status: "idle" });
   const [showHelp, setShowHelp] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [hideUpdateBanner, setHideUpdateBanner] = useState(false);
   const [applyingUpdate, setApplyingUpdate] = useState(false);
   const [mascotEnabled, setMascotEnabled] = useState<boolean>(() => {
@@ -318,6 +320,7 @@ export default function App() {
           stats={stats}
           version={version}
           onHelpClick={() => setShowHelp(true)}
+          onSettingsClick={() => setShowSettings(true)}
           updateState={updateState}
           applyingUpdate={applyingUpdate}
           onApplyUpdate={handleApplyUpdate}
@@ -642,6 +645,9 @@ export default function App() {
       )}
       {showHelp && (
         <HelpModal systemPaths={systemPaths} onClose={() => setShowHelp(false)} />
+      )}
+      {showSettings && (
+        <SettingsModal onClose={() => setShowSettings(false)} onSaved={() => reloadData(true)} />
       )}
 
       {/* Floating downloaded update banner */}
