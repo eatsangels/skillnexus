@@ -4,6 +4,17 @@ Todos los cambios notables de SkillNexus se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.0.0/)
 y el proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
+## [1.0.27] - 2026-07-02
+
+### Añadido (Video Studio)
+- **Previsualización en vivo** con `@remotion/player`: compila el TSX en el navegador
+  y lo reproduce en tiempo real sin necesidad de renderizar. Toggle "En vivo / Renderizado".
+- **Editor con resaltado de sintaxis** (react-simple-code-editor + Prism, 100% offline).
+- **Presets de formato/plataforma** (horizontal, vertical, cuadrado, story, 720p, 4K) y
+  más FPS (24/25/30/50/60).
+- **Formatos de salida** configurables: MP4, WebM y GIF.
+- **Persistencia del proyecto** (código + ajustes) en localStorage.
+
 ## [1.0.26] - 2026-07-02
 
 ### Añadido
