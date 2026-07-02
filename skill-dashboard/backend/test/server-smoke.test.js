@@ -45,14 +45,14 @@ describe("smoke del servidor HTTP", () => {
     expect(j.ok).toBe(true);
     expect(j.port).toBe(PORT);
     expect(typeof j.version).toBe("string");
-  });
+  }, 15000);
 
   it("/dashboard, /agents, /skills y /remotion/status responden 200", async () => {
     for (const path of ["dashboard", "agents", "skills", "remotion/status"]) {
       const res = await fetch(`${BASE}/${path}`);
       expect(res.status).toBe(200);
     }
-  });
+  }, 15000);
 
   it("instalar con source inválido devuelve 400/500 (validación anti inyección)", async () => {
     const res = await fetch(`${BASE}/skills-sh/install`, {
@@ -61,5 +61,5 @@ describe("smoke del servidor HTTP", () => {
       body: JSON.stringify({ source: "foo/bar; rm -rf ~", slug: "x" }),
     });
     expect(res.status).toBeGreaterThanOrEqual(400);
-  });
+  }, 15000);
 });

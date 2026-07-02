@@ -21,10 +21,22 @@ router.get("/status", (req, res) => {
   const child = spawn(cmd, ["me"], { shell: false });
 
   let output = "";
+  let responded = false;
   child.stdout.on("data", (data) => (output += data.toString()));
   child.stderr.on("data", (data) => (output += data.toString()));
 
+  // Si el binario `belt` no existe (p. ej. en CI), spawn emite 'error' y sin este
+  // manejador la respuesta nunca se cerraría (petición colgada).
+  child.on("error", () => {
+    if (!responded) {
+      responded = true;
+      res.json({ loggedIn: false });
+    }
+  });
+
   child.on("close", (code) => {
+    if (responded) return;
+    responded = true;
     if (code === 0) {
       const emailMatch = output.match(/email\s+(.+)/);
       const nameMatch = output.match(/name\s+(.+)/);
@@ -49,10 +61,20 @@ router.post("/login", (req, res) => {
   const child = spawn(cmd, ["login", "--key", key], { shell: false });
 
   let output = "";
+  let responded = false;
   child.stdout.on("data", (data) => (output += data.toString()));
   child.stderr.on("data", (data) => (output += data.toString()));
 
+  child.on("error", (err) => {
+    if (!responded) {
+      responded = true;
+      res.status(500).json({ error: `No se pudo ejecutar belt: ${err.message}` });
+    }
+  });
+
   child.on("close", (code) => {
+    if (responded) return;
+    responded = true;
     if (code === 0) {
       res.json({ success: true, message: "Autenticado con éxito" });
     } else {
