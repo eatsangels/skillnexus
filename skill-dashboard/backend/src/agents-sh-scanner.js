@@ -1,4 +1,4 @@
-import { validateInstallInput } from "./validate.js";
+import { validateInstallInput, isValidSlug } from "./validate.js";
 import { fileURLToPath } from "url";
 import { join, dirname } from "path";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
@@ -316,4 +316,41 @@ export async function installAgent(source, slug) {
   await writeFile(targetFile, frontmatter, "utf-8");
 
   return { success: true, path: targetFile, slug };
+}
+
+// Desinstala un agente instalado. Busca primero por nombre de archivo (<slug>.md) y,
+// si no existe, por el `name` del frontmatter normalizado (el nombre mostrado puede diferir).
+export async function uninstallAgent(slug) {
+  if (!isValidSlug(slug)) {
+    throw new Error("slug inválido");
+  }
+  const { rm, readdir, readFile } = await import("fs/promises");
+  const dir = CONFIG.scanPaths.claudeAgentsDir;
+  if (!existsSync(dir)) {
+    return { success: false, removed: false, reason: "no encontrado", slug };
+  }
+
+  // 1. Coincidencia directa por nombre de archivo.
+  const direct = join(dir, `${slug}.md`);
+  if (existsSync(direct)) {
+    await rm(direct, { force: true });
+    return { success: true, removed: true, slug };
+  }
+
+  // 2. Buscar por `name` del frontmatter normalizado.
+  const matter = (await import("gray-matter")).default;
+  const files = (await readdir(dir)).filter((f) => f.endsWith(".md"));
+  for (const f of files) {
+    try {
+      const parsed = matter(await readFile(join(dir, f), "utf-8"));
+      const name = (parsed.data.name || f.replace(/\.md$/, "")).toLowerCase().replace(/\s+/g, "-");
+      if (name === slug) {
+        await rm(join(dir, f), { force: true });
+        return { success: true, removed: true, slug, file: f };
+      }
+    } catch {
+      // Ignorar archivos con frontmatter inválido en la búsqueda.
+    }
+  }
+  return { success: false, removed: false, reason: "no encontrado", slug };
 }

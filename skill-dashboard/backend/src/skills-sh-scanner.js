@@ -1,6 +1,6 @@
 import { execFile } from "child_process";
 import { generateSpanishDescription } from "./translator.js";
-import { validateInstallInput, isValidRepo } from "./validate.js";
+import { validateInstallInput, isValidRepo, isValidSlug } from "./validate.js";
 import { fileURLToPath } from "url";
 import { join, dirname } from "path";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
@@ -511,4 +511,36 @@ export async function installSkill(source, slug, targetDir) {
   await mkdir(skillDir, { recursive: true });
   await writeFile(join(skillDir, "SKILL.md"), content, "utf-8");
   return { path: skillDir, name: slug, files: ["SKILL.md"], method: "fallback" };
+}
+
+// Desinstala una skill de TODAS las IAs (npx skills remove --global) y limpia la copia local.
+export async function uninstallSkill(slug, targetDir) {
+  if (!isValidSlug(slug)) {
+    throw new Error("slug inválido");
+  }
+  const { rm } = await import("fs/promises");
+  const { existsSync } = await import("fs");
+  const { join } = await import("path");
+
+  let cliOk = false;
+  try {
+    await executeCommand(NPX, ["-y", "skills@latest", "remove", slug, "--global", "--yes"], 60000);
+    cliOk = true;
+  } catch (err) {
+    console.error("[Skills-sh] remove CLI falló, limpiando manualmente:", err);
+  }
+
+  // Limpieza directa por si el CLI no cubrió alguna ruta (canónica + carpeta del proyecto).
+  const paths = [
+    join(homedir(), ".agents", "skills", slug),
+    targetDir ? join(targetDir, slug) : null,
+  ].filter(Boolean);
+  let removed = cliOk;
+  for (const p of paths) {
+    if (existsSync(p)) {
+      await rm(p, { recursive: true, force: true });
+      removed = true;
+    }
+  }
+  return { success: true, removed, slug, method: cliOk ? "cli-global" : "manual" };
 }

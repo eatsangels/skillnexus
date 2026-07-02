@@ -1,16 +1,33 @@
 import { useEffect, useState } from "react";
 import type { SkillDetail } from "../api";
-import { fetchSkill } from "../api";
+import { fetchSkill, uninstallSkillsSh } from "../api";
 
 interface Props {
   name: string;
   onClose: () => void;
+  onUninstalled?: () => void;
 }
 
-export default function SkillModal({ name, onClose }: Props) {
+export default function SkillModal({ name, onClose, onUninstalled }: Props) {
   const [copied, setCopied] = useState(false);
   const [detail, setDetail] = useState<SkillDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [uninstalling, setUninstalling] = useState(false);
+  const [uninstallError, setUninstallError] = useState("");
+
+  async function handleUninstall() {
+    if (!window.confirm(`¿Desinstalar la skill "${detail?.name || name}" de todas tus IAs?`)) return;
+    setUninstalling(true);
+    setUninstallError("");
+    try {
+      await uninstallSkillsSh(detail?.name || name);
+      onUninstalled?.();
+      onClose();
+    } catch (e) {
+      setUninstallError(e instanceof Error ? e.message : "No se pudo desinstalar");
+      setUninstalling(false);
+    }
+  }
   const [lang, setLang] = useState<"en" | "es">(() => {
     const saved = localStorage.getItem("agent-modal-lang");
     return (saved === "en" || saved === "es") ? saved : "es";
@@ -68,13 +85,28 @@ export default function SkillModal({ name, onClose }: Props) {
               </button>
             )}
           </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-xl bg-surface-800/50 hover:bg-surface-700/50 text-surface-400 hover:text-surface-200 transition-all cursor-pointer shrink-0"
-          >
-            &times;
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            {!loading && detail && (
+              <button
+                onClick={handleUninstall}
+                disabled={uninstalling}
+                className="px-3 h-8 flex items-center rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-semibold transition-all cursor-pointer disabled:opacity-50"
+                title="Desinstalar de todas las IAs"
+              >
+                {uninstalling ? "Desinstalando…" : "Desinstalar"}
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="w-8 h-8 flex items-center justify-center rounded-xl bg-surface-800/50 hover:bg-surface-700/50 text-surface-400 hover:text-surface-200 transition-all cursor-pointer"
+            >
+              &times;
+            </button>
+          </div>
         </div>
+        {uninstallError && (
+          <div className="px-6 py-2 text-xs text-red-400 bg-red-500/10 border-b border-red-500/20">{uninstallError}</div>
+        )}
         <div className="p-6 overflow-y-auto min-h-0 flex-1">
           {loading ? (
             <div className="flex items-center gap-3 text-surface-400">

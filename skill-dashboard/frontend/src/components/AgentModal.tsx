@@ -1,17 +1,32 @@
 import { useEffect, useState, useCallback } from "react";
 import type { AgentDetail } from "../api";
-import { fetchAgent, BASE } from "../api";
+import { fetchAgent, uninstallAgentSh, BASE } from "../api";
 
 interface Props {
   name: string;
   onClose: () => void;
+  onUninstalled?: () => void;
 }
 
-export default function AgentModal({ name, onClose }: Props) {
+export default function AgentModal({ name, onClose, onUninstalled }: Props) {
   const [detail, setDetail] = useState<AgentDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [copiedName, setCopiedName] = useState(false);
+  const [uninstalling, setUninstalling] = useState(false);
+
+  async function handleUninstall() {
+    if (!window.confirm(`¿Desinstalar el agente "${detail?.displayName || name}"?`)) return;
+    setUninstalling(true);
+    try {
+      await uninstallAgentSh(name);
+      onUninstalled?.();
+      onClose();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "No se pudo desinstalar");
+      setUninstalling(false);
+    }
+  }
   const [lang, setLang] = useState<"en" | "es">(() => {
     const saved = localStorage.getItem("agent-modal-lang");
     return (saved === "en" || saved === "es") ? saved : "es";
@@ -145,12 +160,24 @@ export default function AgentModal({ name, onClose }: Props) {
               </button>
             )}
           </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-xl bg-surface-800/50 hover:bg-surface-700/50 text-surface-400 hover:text-surface-200 transition-all cursor-pointer shrink-0"
-          >
-            &times;
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            {!loading && detail?.source === "claude" && (
+              <button
+                onClick={handleUninstall}
+                disabled={uninstalling}
+                className="px-3 h-8 flex items-center rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-semibold transition-all cursor-pointer disabled:opacity-50"
+                title="Desinstalar agente"
+              >
+                {uninstalling ? "Desinstalando…" : "Desinstalar"}
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="w-8 h-8 flex items-center justify-center rounded-xl bg-surface-800/50 hover:bg-surface-700/50 text-surface-400 hover:text-surface-200 transition-all cursor-pointer"
+            >
+              &times;
+            </button>
+          </div>
         </div>
         <div className="p-6 overflow-y-auto min-h-0 flex-1">
           {loading ? (

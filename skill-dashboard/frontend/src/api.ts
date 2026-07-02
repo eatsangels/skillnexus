@@ -217,6 +217,18 @@ export async function installSkillsSh(source: string, slug: string): Promise<{ s
   return res.json();
 }
 
+export async function uninstallSkillsSh(slug: string): Promise<{ success: boolean; result: { removed: boolean; method?: string } }> {
+  const res = await fetch(`${BASE}/skills-sh/${encodeURIComponent(slug)}`, { method: "DELETE" });
+  if (!res.ok) throw new Error("Uninstall failed");
+  return res.json();
+}
+
+export async function uninstallAgentSh(name: string): Promise<{ success: boolean; result: { removed: boolean } }> {
+  const res = await fetch(`${BASE}/agents/${encodeURIComponent(name)}`, { method: "DELETE" });
+  if (!res.ok) throw new Error("Uninstall failed");
+  return res.json();
+}
+
 export interface AgentsShAgent {
   id: string;
   name: string;

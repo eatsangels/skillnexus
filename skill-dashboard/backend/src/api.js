@@ -2,8 +2,8 @@ import { Router } from "express";
 import { spawn } from "child_process";
 import { scanSkills } from "./skill-scanner.js";
 import { scanAgents } from "./agent-scanner.js";
-import { getCatalog, refreshCatalog, searchSkills, fetchSkillDetail, installSkill, onCatalogRefreshed } from "./skills-sh-scanner.js";
-import { getAgentsCatalog, refreshAgentsCatalog, searchAgents, fetchAgentDetail, installAgent, onAgentsCatalogRefreshed } from "./agents-sh-scanner.js";
+import { getCatalog, refreshCatalog, searchSkills, fetchSkillDetail, installSkill, uninstallSkill, onCatalogRefreshed } from "./skills-sh-scanner.js";
+import { getAgentsCatalog, refreshAgentsCatalog, searchAgents, fetchAgentDetail, installAgent, uninstallAgent, onAgentsCatalogRefreshed } from "./agents-sh-scanner.js";
 import { homedir } from "os";
 import { join, dirname } from "path";
 import { CONFIG } from "./config.js";
@@ -310,6 +310,19 @@ router.post("/skills-sh/install", async (req, res) => {
   }
 });
 
+// Desinstala una skill de todas las IAs.
+router.delete("/skills-sh/:slug", async (req, res) => {
+  try {
+    const targetDir = join(homedir(), "Documents", "curso-opencode", ".opencode", "skills");
+    const result = await uninstallSkill(req.params.slug, targetDir);
+    scan();
+    broadcast("update", { lastScan });
+    res.json({ success: true, result });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 router.get("/agents-sh", async (_req, res) => {
   try {
     const agents = getAgentsCatalog();
@@ -351,6 +364,18 @@ router.post("/agents-sh/install", async (req, res) => {
     scan();
     broadcast("update", { lastScan });
 
+    res.json({ success: true, result });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Desinstala un agente instalado (~/.claude/agents/<name>.md).
+router.delete("/agents/:name", async (req, res) => {
+  try {
+    const result = await uninstallAgent(req.params.name);
+    scan();
+    broadcast("update", { lastScan });
     res.json({ success: true, result });
   } catch (e) {
     res.status(500).json({ error: e.message });

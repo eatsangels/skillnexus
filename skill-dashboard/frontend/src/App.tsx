@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, lazy, Suspense } from "react";
 import type { SkillSummary, AgentSummary, DashboardStats, SkillsShSkill, SystemPaths, AgentsShAgent } from "./api";
 import { fetchSkills, fetchAgents, fetchDashboard, fetchSkillsSh, fetchAgentsSh, BASE } from "./api";
 import StatsHeader from "./components/StatsHeader.tsx";
@@ -12,7 +12,8 @@ import SkillsShModal from "./components/SkillsShModal.tsx";
 import AgentsShCard from "./components/AgentsShCard.tsx";
 import AgentsShModal from "./components/AgentsShModal.tsx";
 import HelpModal from "./components/HelpModal.tsx";
-import VideoStudio from "./components/VideoStudio.tsx";
+// Carga diferida: Video Studio (Remotion) es pesado y no se usa en el arranque.
+const VideoStudio = lazy(() => import("./components/VideoStudio.tsx"));
 
 type Tab = "skills" | "agents" | "skills-sh" | "agents-sh" | "video";
 type ViewMode = "all" | "grouped";
@@ -41,8 +42,17 @@ const CATEGORY_COLORS: Record<string, string> = {
   "Mobile/XR": "from-fuchsia-600/20 to-fuchsia-900/10 border-fuchsia-500/20",
 };
 
+// Lee un parámetro de la URL (para restaurar tab/búsqueda/filtros al recargar).
+function urlParam(key: string, fallback = ""): string {
+  if (typeof window === "undefined") return fallback;
+  return new URLSearchParams(window.location.search).get(key) || fallback;
+}
+
+const VALID_TABS: Tab[] = ["skills", "agents", "skills-sh", "agents-sh", "video"];
+
 export default function App() {
-  const [tab, setTab] = useState<Tab>("agents");
+  const initialTab = VALID_TABS.includes(urlParam("tab") as Tab) ? (urlParam("tab") as Tab) : "agents";
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [view, setView] = useState<ViewMode>("all");
   const [skillsShView, setSkillsShView] = useState<ViewMode>("all");
   const [agentsShView, setAgentsShView] = useState<ViewMode>("all");
@@ -51,10 +61,11 @@ export default function App() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [skillsSh, setSkillsSh] = useState<SkillsShSkill[]>([]);
   const [agentsSh, setAgentsSh] = useState<AgentsShAgent[]>([]);
-  const [search, setSearch] = useState("");
+  const [online, setOnline] = useState(true);
+  const [search, setSearch] = useState(urlParam("q"));
   const [frameworkFilter, setFrameworkFilter] = useState("");
   const [modeFilter, setModeFilter] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState(urlParam("cat"));
   const [sourceFilter, setSourceFilter] = useState("");
   const [skillsShCategoryFilter, setSkillsShCategoryFilter] = useState("");
   const [agentsShCategoryFilter, setAgentsShCategoryFilter] = useState("");
@@ -140,11 +151,23 @@ export default function App() {
     reloadData(false);
   }, []);
 
+  // Persistir tab / búsqueda / categoría en la URL para no perderlos al recargar.
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (tab && tab !== "agents") params.set("tab", tab);
+    if (search) params.set("q", search);
+    if (categoryFilter) params.set("cat", categoryFilter);
+    const qs = params.toString();
+    const newUrl = `${window.location.pathname}${qs ? "?" + qs : ""}`;
+    window.history.replaceState(null, "", newUrl);
+  }, [tab, search, categoryFilter]);
+
   useEffect(() => {
     const eventSource = new EventSource(`${BASE}/events`);
-    
+
     eventSource.onopen = () => {
       console.log("[SSE] Connection opened, reloading data...");
+      setOnline(true);
       reloadData(true);
     };
 
@@ -174,6 +197,7 @@ export default function App() {
 
     eventSource.onerror = (err) => {
       console.warn("[SSE] Connection lost, retrying...", err);
+      setOnline(false);
     };
 
     return () => {
@@ -271,6 +295,15 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-surface-975 text-surface-100 font-sans antialiased selection:bg-brand-500/30">
+      {!online && (
+        <div className="bg-amber-500/10 border-b border-amber-500/30 text-amber-300 text-xs py-2.5 px-6 flex items-center justify-center gap-2 shrink-0">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+          </span>
+          <span>Sin conexión con el backend. Reintentando automáticamente…</span>
+        </div>
+      )}
       {updateState.status === "available" && (
         <div className="bg-brand-500/10 border-b border-brand-500/20 text-brand-300 text-xs py-2.5 px-6 flex items-center justify-center gap-2 animate-fade-in shrink-0">
           <span className="relative flex h-2 w-2">
@@ -573,15 +606,25 @@ export default function App() {
         )}
 
         {tab === "video" && (
-          <VideoStudio base={BASE} />
+          <Suspense fallback={<div className="text-center py-16 text-surface-500">Cargando Video Studio…</div>}>
+            <VideoStudio base={BASE} />
+          </Suspense>
         )}
       </div>
 
       {selectedSkill && (
-        <SkillModal name={selectedSkill} onClose={() => setSelectedSkill(null)} />
+        <SkillModal
+          name={selectedSkill}
+          onClose={() => setSelectedSkill(null)}
+          onUninstalled={() => reloadData(true)}
+        />
       )}
       {selectedAgent && (
-        <AgentModal name={selectedAgent} onClose={() => setSelectedAgent(null)} />
+        <AgentModal
+          name={selectedAgent}
+          onClose={() => setSelectedAgent(null)}
+          onUninstalled={() => reloadData(true)}
+        />
       )}
       {selectedSkillsSh && (
         <SkillsShModal
