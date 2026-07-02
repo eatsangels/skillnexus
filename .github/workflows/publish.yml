@@ -30,8 +30,14 @@ jobs:
       - name: Install backend dependencies
         run: npm --prefix skill-dashboard/backend install
 
+      - name: Run backend tests (quality gate)
+        run: npm --prefix skill-dashboard/backend test
+
       - name: Build frontend assets
         run: npm run build:frontend
+
+      - name: Prune backend devDependencies (no empaquetar Vitest en el asar)
+        run: npm --prefix skill-dashboard/backend prune --omit=dev
 
       - name: Build and Publish Electron App
         env:

@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout git repository
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install backend dependencies
+        run: npm --prefix skill-dashboard/backend install
+
+      - name: Run backend tests
+        run: npm --prefix skill-dashboard/backend test
+
+      - name: Install frontend dependencies
+        run: npm --prefix skill-dashboard/frontend install
+
+      - name: Type-check and build frontend
+        run: npm run build:frontend
