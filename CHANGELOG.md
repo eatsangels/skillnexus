@@ -4,6 +4,17 @@ Todos los cambios notables de SkillNexus se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.0.0/)
 y el proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
+## [1.0.30] - 2026-07-02
+
+### Corregido (Video Studio)
+- **El render local fallaba con `ENOTDIR`** en la app empaquetada: intentaba crear
+  `.temp_remotion` dentro de `app.asar` (archivo de solo lectura). Ahora el trabajo de
+  renderizado y los recursos van a una carpeta escribible (`~/.skillnexus/remotion`).
+  Verificado de punta a punta: 60/60 frames → output.mp4 generado.
+- **El editor de código se veía negro/vacío**: la interop del import `prismjs/components/prism-core`
+  dejaba las gramáticas desincronizadas en el bundle. Se usa el import principal de `prismjs`,
+  restaurando el resaltado de sintaxis.
+
 ## [1.0.29] - 2026-07-02
 
 ### Corregido

@@ -83,10 +83,7 @@ import CodeEditorImport from "react-simple-code-editor";
 // renderizar un objeto (React error #130 "Element type is invalid ... got: object").
 const CodeEditor = ((CodeEditorImport as unknown as { default?: unknown })?.default ??
   CodeEditorImport) as typeof CodeEditorImport;
-import { highlight, languages } from "prismjs/components/prism-core";
-import "prismjs/components/prism-clike";
-import "prismjs/components/prism-markup";
-import "prismjs/components/prism-javascript";
+import Prism from "prismjs";
 import "prismjs/components/prism-jsx";
 import "prismjs/components/prism-typescript";
 import "prismjs/components/prism-tsx";
@@ -602,7 +599,7 @@ export default function VideoStudio({ base }: Props) {
               <CodeEditor
                 value={code}
                 onValueChange={(value) => setCode(value)}
-                highlight={(c) => highlight(c, languages.tsx || languages.jsx || languages.javascript, "tsx")}
+                highlight={(c) => Prism.highlight(c, Prism.languages.tsx || Prism.languages.jsx || Prism.languages.javascript || Prism.languages.markup, "tsx")}
                 padding={16}
                 textareaClassName="focus:outline-none"
                 style={{

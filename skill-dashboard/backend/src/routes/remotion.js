@@ -3,11 +3,17 @@ import { spawn } from "child_process";
 import { join, dirname } from "path";
 import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, statSync, unlinkSync } from "fs";
 import { fileURLToPath } from "url";
+import { homedir } from "os";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-// backend/src/routes -> raíz del proyecto (4 niveles arriba).
+// backend/src/routes -> raíz del proyecto (4 niveles arriba). Solo para binarios empaquetados.
 const ROOT = join(__dirname, "..", "..", "..", "..");
+
+// Directorio de trabajo ESCRIBIBLE para el renderizado local y los recursos.
+// En la app empaquetada, ROOT apunta dentro de app.asar (archivo de solo lectura), así que
+// NO se puede crear .temp_remotion ahí (ENOTDIR). Usamos una carpeta en el home del usuario.
+const WORK_DIR = join(homedir(), ".skillnexus", "remotion");
 
 // El modo local escribe y ejecuta código arbitrario; se puede deshabilitar por entorno.
 const ALLOW_LOCAL_REMOTION = process.env.SKILLNEXUS_ALLOW_LOCAL_REMOTION !== "false";
@@ -148,7 +154,7 @@ router.post("/render", async (req, res) => {
       if (child) child.kill();
     });
   } else {
-    const tempDir = join(ROOT, ".temp_remotion");
+    const tempDir = WORK_DIR;
     res.write(`data: ${JSON.stringify({ chunk: `> Iniciando renderizado local en: ${tempDir}\n` })}\n\n`);
 
     try {
@@ -291,7 +297,7 @@ registerRoot(Root);
 
 router.get("/video", (req, res) => {
   const ext = ["mp4", "webm", "gif"].includes(req.query.format) ? req.query.format : "mp4";
-  const videoPath = join(ROOT, ".temp_remotion", `output.${ext}`);
+  const videoPath = join(WORK_DIR, `output.${ext}`);
   if (existsSync(videoPath)) {
     res.sendFile(videoPath);
   } else {
@@ -301,7 +307,7 @@ router.get("/video", (req, res) => {
 
 // Remotion Studio Local Assets Endpoints
 router.get("/assets", (req, res) => {
-  const publicDir = join(ROOT, ".temp_remotion", "public");
+  const publicDir = join(WORK_DIR, "public");
   if (!existsSync(publicDir)) {
     return res.json({ assets: [] });
   }
@@ -323,7 +329,7 @@ router.get("/assets", (req, res) => {
 });
 
 router.get("/assets/:filename", (req, res) => {
-  const assetPath = join(ROOT, ".temp_remotion", "public", req.params.filename);
+  const assetPath = join(WORK_DIR, "public", req.params.filename);
   if (existsSync(assetPath)) {
     res.sendFile(assetPath);
   } else {
@@ -337,7 +343,7 @@ router.post("/assets", (req, res) => {
     return res.status(400).json({ error: "Filename and base64Data are required" });
   }
   try {
-    const publicDir = join(ROOT, ".temp_remotion", "public");
+    const publicDir = join(WORK_DIR, "public");
     if (!existsSync(publicDir)) {
       mkdirSync(publicDir, { recursive: true });
     }
@@ -352,7 +358,7 @@ router.post("/assets", (req, res) => {
 
 router.delete("/assets/:filename", (req, res) => {
   try {
-    const assetPath = join(ROOT, ".temp_remotion", "public", req.params.filename);
+    const assetPath = join(WORK_DIR, "public", req.params.filename);
     if (existsSync(assetPath)) {
       unlinkSync(assetPath);
       res.json({ success: true });
