@@ -308,29 +308,32 @@ export default function VideoStudio({ base }: Props) {
     setTimeout(() => setCopiedNotification(null), 2000);
   };
 
-  // Inserta el asset directamente en el editor, en la posición del cursor, y asegura
-  // que los componentes necesarios estén importados de 'remotion'.
+  // Inserta el asset en el LUGAR CORRECTO automáticamente: como último hijo del elemento
+  // raíz del JSX (justo antes de su etiqueta de cierre), y asegura el import de remotion.
+  // Así el usuario no tiene que saber dónde colocarlo ni posicionar el cursor.
   const insertSnippet = (filename: string) => {
     const { snippet, needs } = buildSnippet(filename);
-    const ta = codeEditorRef.current;
-    const start = ta?.selectionStart ?? code.length;
-    const end = ta?.selectionEnd ?? code.length;
-    const withSnippet = code.slice(0, start) + snippet + code.slice(end);
-    const finalCode = ensureRemotionImport(withSnippet, needs);
-    setCode(finalCode);
+    let next = ensureRemotionImport(code, needs);
+
+    // En JSX bien formado, la etiqueta de cierre del elemento raíz es la ÚLTIMA del archivo.
+    // Insertamos el snippet en su propia línea justo antes de ella, con la indentación adecuada.
+    const matches = [...next.matchAll(/([ \t]*)<\/[A-Za-z][\w.]*>/g)];
+    if (matches.length > 0) {
+      const last = matches[matches.length - 1];
+      const at = last.index ?? next.length;
+      const indent = last[1] || "      ";
+      const insertion = `${indent}  ${snippet}\n`;
+      next = next.slice(0, at) + insertion + next.slice(at);
+    } else {
+      // Sin JSX de cierre detectable: lo dejamos comentado al final para que el usuario lo ubique.
+      next = `${next}\n// Pega esto dentro del return: ${snippet}`;
+    }
+
+    setCode(next);
+    setPreviewMode("live");
     setCopiedNotification(filename);
     setTimeout(() => setCopiedNotification(null), 2000);
-    // Reenfocar el editor tras insertar.
-    requestAnimationFrame(() => {
-      const el = codeEditorRef.current;
-      if (el) {
-        el.focus();
-        // El cursor se corre por el import añadido; lo dejamos al final del snippet insertado.
-        const offset = finalCode.length - code.length;
-        const pos = start + snippet.length + Math.max(0, offset - snippet.length);
-        try { el.setSelectionRange(pos, pos); } catch { /* noop */ }
-      }
-    });
+    requestAnimationFrame(() => codeEditorRef.current?.focus());
   };
 
   // Detectar modelos de Ollama disponibles al montar.

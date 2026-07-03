@@ -4,6 +4,14 @@ Todos los cambios notables de SkillNexus se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.0.0/)
 y el proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
+## [1.0.34] - 2026-07-02
+
+### Corregido/Mejorado (Video Studio)
+- **"+ Insertar" ahora coloca el recurso en el lugar correcto automáticamente**: lo agrega
+  como último hijo del elemento raíz del JSX (justo antes de su etiqueta de cierre), en vez
+  de en la posición del cursor (que rompía el código). Ya no necesitas saber dónde ponerlo.
+  Verificado: el código resultante compila.
+
 ## [1.0.33] - 2026-07-02
 
 ### Añadido (Video Studio — Recursos)

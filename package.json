@@ -1,6 +1,6 @@
 {
   "name": "skillnexus-desktop",
-  "version": "1.0.33",
+  "version": "1.0.34",
   "description": "Desktop version of SkillNexus Dashboard",
   "main": "electron-main.js",
   "repository": {
