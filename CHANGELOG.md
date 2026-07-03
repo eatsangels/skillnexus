@@ -4,6 +4,15 @@ Todos los cambios notables de SkillNexus se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.0.0/)
 y el proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
+## [1.0.36] - 2026-07-03
+
+### Añadido (Video Studio)
+- **Video de secuencia a partir de tus imágenes** (estilo slideshow): botón "🎞️ Crear video
+  de secuencia con mis imágenes" que, con las imágenes subidas (2, 5 o las que sean), genera
+  automáticamente un componente Remotion que las recorre en orden con crossfade (fundido
+  cruzado) + Ken Burns (zoom suave) y fundido de entrada/salida. Ajusta la duración al número
+  de imágenes. Se ve en la preview en vivo y se exporta a MP4/WebM/GIF.
+
 ## [1.0.35] - 2026-07-02
 
 ### Mejorado (Video Studio — IA)

@@ -336,6 +336,52 @@ export default function VideoStudio({ base }: Props) {
     requestAnimationFrame(() => codeEditorRef.current?.focus());
   };
 
+  // Genera automáticamente un video de SECUENCIA a partir de las imágenes subidas:
+  // cada imagen aparece en orden con crossfade (fundido cruzado) + Ken Burns (zoom suave),
+  // más fundido de entrada y salida (inicio y final limpios). 2, 5 o las que quieras.
+  const generateSlideshow = () => {
+    const imgs = assets
+      .filter((a) => /\.(png|jpe?g|gif|webp|svg)$/i.test(a.name))
+      .map((a) => a.name);
+    if (imgs.length === 0) {
+      alert("Sube al menos una imagen en 'Recursos Locales del Video' antes de crear la secuencia.");
+      return;
+    }
+    // ~2.5s por imagen; ajusta la duración total automáticamente.
+    setDuration(Math.max(2, Math.round(imgs.length * 2.5)));
+    const list = imgs.map((n) => JSON.stringify(n)).join(", ");
+    // Nota: el código generado usa concatenación de strings (sin backticks) a propósito.
+    const generated =
+      "import { AbsoluteFill, Img, staticFile, useCurrentFrame, useVideoConfig, interpolate } from 'remotion';\n\n" +
+      "// Secuencia automática de imágenes: crossfade + Ken Burns (zoom suave), con inicio y final.\n" +
+      "const IMAGES = [" + list + "];\n\n" +
+      "export default function Main() {\n" +
+      "  const frame = useCurrentFrame();\n" +
+      "  const { durationInFrames } = useVideoConfig();\n" +
+      "  const per = durationInFrames / IMAGES.length;\n" +
+      "  const fade = Math.min(18, per * 0.35);\n" +
+      "  return (\n" +
+      "    <AbsoluteFill style={{ backgroundColor: 'black' }}>\n" +
+      "      {IMAGES.map((src, i) => {\n" +
+      "        const start = i * per;\n" +
+      "        const end = start + per;\n" +
+      "        const opacity = interpolate(frame, [start - fade, start, end - fade, end], [0, 1, 1, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });\n" +
+      "        if (opacity <= 0) return null;\n" +
+      "        const scale = interpolate(frame, [start, end], [1.05, 1.2], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });\n" +
+      "        return (\n" +
+      "          <AbsoluteFill key={i} style={{ opacity }}>\n" +
+      "            <Img src={staticFile(src)} style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scale(' + scale + ')' }} />\n" +
+      "          </AbsoluteFill>\n" +
+      "        );\n" +
+      "      })}\n" +
+      "      <AbsoluteFill style={{ backgroundColor: 'black', pointerEvents: 'none', opacity: interpolate(frame, [0, 15, durationInFrames - 15, durationInFrames], [1, 0, 0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }) }} />\n" +
+      "    </AbsoluteFill>\n" +
+      "  );\n" +
+      "}\n";
+    setCode(generated);
+    setPreviewMode("live");
+  };
+
   // Detectar modelos de Ollama disponibles al montar.
   const loadOllamaModels = async () => {
     try {
@@ -896,6 +942,17 @@ export default function VideoStudio({ base }: Props) {
               </span>
             </div>
           </div>
+
+          {/* Crear video de secuencia con las imágenes subidas */}
+          {assets.filter((a) => /\.(png|jpe?g|gif|webp|svg)$/i.test(a.name)).length > 0 && (
+            <button
+              onClick={generateSlideshow}
+              className="w-full bg-gradient-to-r from-brand-600 to-fuchsia-600 hover:from-brand-500 hover:to-fuchsia-500 text-white text-xs font-bold py-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2"
+              title="Crea un video que recorre tus imágenes con transiciones (crossfade + zoom)"
+            >
+              🎞️ Crear video de secuencia con mis imágenes
+            </button>
+          )}
 
           {/* Lista de Recursos */}
           <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
