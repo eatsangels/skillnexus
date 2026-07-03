@@ -37,13 +37,17 @@ function extractCode(text) {
   return text.trim();
 }
 
-// Lista los modelos cargados en Ollama.
+// Lista los modelos cargados en Ollama (con su tamaño, para elegir según la RAM).
 router.get("/models", async (_req, res) => {
   try {
     const r = await fetch(`${OLLAMA_HOST}/api/tags`, { signal: AbortSignal.timeout(5000) });
     if (!r.ok) throw new Error(`Ollama respondió ${r.status}`);
     const data = await r.json();
-    const models = (data.models || []).map((m) => m.name).filter(Boolean);
+    const models = (data.models || [])
+      .filter((m) => m.name)
+      .map((m) => ({ name: m.name, size: m.size || 0 }))
+      // Ordenar de menor a mayor tamaño para poder elegir por defecto uno que quepa.
+      .sort((a, b) => a.size - b.size);
     res.json({ available: true, models });
   } catch (e) {
     // Ollama no está corriendo o no es accesible.
@@ -78,6 +82,12 @@ router.post("/generate", async (req, res) => {
 
     if (!r.ok) {
       const txt = await r.text().catch(() => "");
+      // Detectar errores de memoria/recursos para dar un mensaje accionable.
+      if (/allocate buffer|out of memory|cpu_buffer|failed to allocate|not enough memory|oom/i.test(txt)) {
+        return res.status(502).json({
+          error: "El modelo es demasiado grande para la memoria (RAM/VRAM) de tu PC. Elige un modelo más pequeño en el selector (por ejemplo gemma4 o la variante ':latest' en vez de la de 35b).",
+        });
+      }
       return res.status(502).json({ error: `Ollama error ${r.status}: ${txt.slice(0, 200)}` });
     }
 

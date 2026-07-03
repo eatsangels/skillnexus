@@ -4,6 +4,15 @@ Todos los cambios notables de SkillNexus se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.0.0/)
 y el proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
+## [1.0.35] - 2026-07-02
+
+### Mejorado (Video Studio — IA)
+- El selector de modelos de Ollama ahora **muestra el tamaño (GB)** de cada modelo y los
+  ordena de menor a mayor; por defecto elige el más pequeño (para que quepa en RAM).
+- **Mensaje de error claro** cuando el modelo no cabe en memoria (antes mostraba el error
+  crudo de llama-server); ahora sugiere usar un modelo más pequeño.
+- Texto aclaratorio: la generación produce **videos animados (Remotion)**, no páginas web.
+
 ## [1.0.34] - 2026-07-02
 
 ### Corregido/Mejorado (Video Studio)

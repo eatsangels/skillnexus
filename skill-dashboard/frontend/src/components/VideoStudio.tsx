@@ -161,7 +161,7 @@ export default function VideoStudio({ base }: Props) {
   const [outputFormat, setOutputFormat] = useState<"mp4" | "webm" | "gif">(saved?.outputFormat ?? "mp4");
   // IA local con Ollama
   const [ollamaAvailable, setOllamaAvailable] = useState(false);
-  const [ollamaModels, setOllamaModels] = useState<string[]>([]);
+  const [ollamaModels, setOllamaModels] = useState<{ name: string; size: number }[]>([]);
   const [ollamaModel, setOllamaModel] = useState<string>("");
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiGenerating, setAiGenerating] = useState(false);
@@ -342,9 +342,14 @@ export default function VideoStudio({ base }: Props) {
       const res = await fetch(`${base}/ollama/models`);
       const data = await res.json();
       setOllamaAvailable(!!data.available);
-      setOllamaModels(data.models || []);
-      if (data.models && data.models.length > 0) {
-        setOllamaModel((prev) => prev || data.models[0]);
+      // El backend devuelve [{name, size}] ordenados de menor a mayor.
+      const models: { name: string; size: number }[] = (data.models || []).map((m: unknown) =>
+        typeof m === "string" ? { name: m, size: 0 } : (m as { name: string; size: number })
+      );
+      setOllamaModels(models);
+      if (models.length > 0) {
+        // Por defecto elegimos el más pequeño (primero tras el orden ascendente) para que quepa en RAM.
+        setOllamaModel((prev) => prev || models[0].name);
       }
     } catch {
       setOllamaAvailable(false);
@@ -631,9 +636,10 @@ export default function VideoStudio({ base }: Props) {
                   className="bg-surface-900 border border-surface-700/50 rounded-lg px-2 py-1 text-[11px] text-surface-200 focus:outline-none cursor-pointer max-w-[180px]"
                   title="Modelo de Ollama"
                 >
-                  {ollamaModels.map((m) => (
-                    <option key={m} value={m}>{m}</option>
-                  ))}
+                  {ollamaModels.map((m) => {
+                    const gb = m.size ? ` (${(m.size / 1e9).toFixed(1)} GB)` : "";
+                    return <option key={m.name} value={m.name}>{m.name}{gb}</option>;
+                  })}
                 </select>
               ) : (
                 <button
@@ -670,7 +676,7 @@ export default function VideoStudio({ base }: Props) {
             </div>
             {aiError && <p className="text-[11px] text-rose-400">{aiError}</p>}
             <p className="text-[10px] text-surface-500">
-              Usa tus modelos locales de Ollama. El resultado reemplaza el código del editor; luego puedes ajustarlo y renderizar.
+              Genera <strong>videos animados</strong> (Remotion), no páginas web. Usa tus modelos locales de Ollama; elige uno que quepa en tu RAM (los de menos GB son más rápidos). El resultado reemplaza el código del editor.
             </p>
           </div>
 
