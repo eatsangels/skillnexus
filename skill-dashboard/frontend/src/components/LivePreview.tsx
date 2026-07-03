@@ -9,12 +9,13 @@ interface Props {
   fps: number;
   duration: number;
   inputProps?: Record<string, unknown>;
+  assetsBaseUrl?: string;
 }
 
 // Previsualización en tiempo real (sin renderizar). Compila el TSX del usuario con un
 // pequeño debounce y lo reproduce con <Player>. Los errores de compilación y de ejecución
 // se muestran de forma amable en vez de romper la app.
-export default function LivePreview({ code, width, height, fps, duration, inputProps }: Props) {
+export default function LivePreview({ code, width, height, fps, duration, inputProps, assetsBaseUrl }: Props) {
   const [debouncedCode, setDebouncedCode] = useState(code);
 
   useEffect(() => {
@@ -22,7 +23,7 @@ export default function LivePreview({ code, width, height, fps, duration, inputP
     return () => clearTimeout(t);
   }, [code]);
 
-  const { component, error } = useMemo(() => compileRemotion(debouncedCode), [debouncedCode]);
+  const { component, error } = useMemo(() => compileRemotion(debouncedCode, assetsBaseUrl), [debouncedCode, assetsBaseUrl]);
 
   const durationInFrames = Math.max(1, Math.floor(Number(duration) * Number(fps)) || 1);
 

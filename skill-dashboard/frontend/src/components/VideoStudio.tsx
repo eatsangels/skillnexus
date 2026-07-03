@@ -178,6 +178,7 @@ export default function VideoStudio({ base }: Props) {
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
 
   const logEndRef = useRef<HTMLDivElement>(null);
+  const codeEditorRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-scroll logs
   useEffect(() => {
@@ -272,23 +273,64 @@ export default function VideoStudio({ base }: Props) {
     }
   };
 
-  const copySnippet = (filename: string) => {
+  // Construye el snippet JSX apropiado según el tipo de archivo y qué componentes de
+  // remotion necesita importar.
+  const buildSnippet = (filename: string): { snippet: string; needs: string[] } => {
     const ext = filename.split(".").pop()?.toLowerCase() || "";
-    let snippet = "";
     if (["png", "jpg", "jpeg", "gif", "webp", "svg"].includes(ext)) {
-      snippet = `<Img src={staticFile("${filename}")} style={{ width: 300 }} />`;
-    } else if (["mp3", "wav", "ogg"].includes(ext)) {
-      snippet = `<Audio src={staticFile("${filename}")} />`;
-    } else if (["mp4", "webm", "mkv"].includes(ext)) {
-      snippet = `<Video src={staticFile("${filename}")} style={{ width: '100%' }} />`;
-    } else {
-      snippet = `staticFile("${filename}")`;
+      return { snippet: `<Img src={staticFile("${filename}")} style={{ width: 300 }} />`, needs: ["Img", "staticFile"] };
     }
+    if (["mp3", "wav", "ogg"].includes(ext)) {
+      return { snippet: `<Audio src={staticFile("${filename}")} />`, needs: ["Audio", "staticFile"] };
+    }
+    if (["mp4", "webm", "mkv"].includes(ext)) {
+      return { snippet: `<Video src={staticFile("${filename}")} style={{ width: '100%' }} />`, needs: ["Video", "staticFile"] };
+    }
+    return { snippet: `staticFile("${filename}")`, needs: ["staticFile"] };
+  };
+
+  // Añade los nombres que falten al import de 'remotion' (o crea el import si no existe).
+  const ensureRemotionImport = (src: string, needs: string[]): string => {
+    const importRe = /import\s*\{([^}]*)\}\s*from\s*['"]remotion['"];?/;
+    const m = src.match(importRe);
+    if (m) {
+      const existing = m[1].split(",").map((s) => s.trim()).filter(Boolean);
+      const merged = Array.from(new Set([...existing, ...needs]));
+      return src.replace(importRe, `import { ${merged.join(", ")} } from 'remotion';`);
+    }
+    return `import { ${needs.join(", ")} } from 'remotion';\n` + src;
+  };
+
+  const copySnippet = (filename: string) => {
+    const { snippet } = buildSnippet(filename);
     navigator.clipboard.writeText(snippet);
     setCopiedNotification(filename);
-    setTimeout(() => {
-      setCopiedNotification(null);
-    }, 2000);
+    setTimeout(() => setCopiedNotification(null), 2000);
+  };
+
+  // Inserta el asset directamente en el editor, en la posición del cursor, y asegura
+  // que los componentes necesarios estén importados de 'remotion'.
+  const insertSnippet = (filename: string) => {
+    const { snippet, needs } = buildSnippet(filename);
+    const ta = codeEditorRef.current;
+    const start = ta?.selectionStart ?? code.length;
+    const end = ta?.selectionEnd ?? code.length;
+    const withSnippet = code.slice(0, start) + snippet + code.slice(end);
+    const finalCode = ensureRemotionImport(withSnippet, needs);
+    setCode(finalCode);
+    setCopiedNotification(filename);
+    setTimeout(() => setCopiedNotification(null), 2000);
+    // Reenfocar el editor tras insertar.
+    requestAnimationFrame(() => {
+      const el = codeEditorRef.current;
+      if (el) {
+        el.focus();
+        // El cursor se corre por el import añadido; lo dejamos al final del snippet insertado.
+        const offset = finalCode.length - code.length;
+        const pos = start + snippet.length + Math.max(0, offset - snippet.length);
+        try { el.setSelectionRange(pos, pos); } catch { /* noop */ }
+      }
+    });
   };
 
   // Detectar modelos de Ollama disponibles al montar.
@@ -688,6 +730,7 @@ export default function VideoStudio({ base }: Props) {
             </div>
             <div className="relative flex-1 rounded-xl border border-surface-700/50 overflow-hidden bg-surface-975 min-h-[350px]">
               <textarea
+                ref={codeEditorRef}
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 spellCheck={false}
@@ -755,7 +798,7 @@ export default function VideoStudio({ base }: Props) {
 
           <div className="aspect-video bg-surface-975 rounded-xl border border-surface-800 overflow-hidden flex items-center justify-center relative">
             {previewMode === "live" ? (
-              <LivePreview code={code} width={width} height={height} fps={fps} duration={duration} />
+              <LivePreview code={code} width={width} height={height} fps={fps} duration={duration} assetsBaseUrl={`${base}/remotion/assets/`} />
             ) : videoUrl ? (
               outputFormat === "gif" ? (
                 <img src={videoUrl} alt="GIF renderizado" className="w-full h-full object-contain" />
@@ -820,7 +863,7 @@ export default function VideoStudio({ base }: Props) {
           </h3>
           
           <p className="text-xs text-surface-400 leading-relaxed">
-            Sube imágenes, audios o videos. Se guardan en <code>.temp_remotion/public/</code> y se acceden en tu código con <code>staticFile("nombre")</code>.
+            Sube imágenes, audios o videos y pulsa <strong className="text-brand-300">+ Insertar</strong> para agregarlos directamente al editor (con su import). Funcionan en la <strong>preview en vivo</strong> y en el <strong>render</strong> vía <code>staticFile("nombre")</code>.
           </p>
 
           {/* Área de Subida de Archivos */}
@@ -897,6 +940,13 @@ export default function VideoStudio({ base }: Props) {
                     </div>
                     
                     <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => insertSnippet(asset.name)}
+                        className="px-2 py-1 rounded-lg text-[10px] font-bold bg-brand-600/20 text-brand-300 hover:bg-brand-600/40 transition-all cursor-pointer"
+                        title="Insertar en el editor (agrega el código y el import)"
+                      >
+                        + Insertar
+                      </button>
                       <button
                         onClick={() => copySnippet(asset.name)}
                         className={`p-1.5 rounded-lg transition-all cursor-pointer relative ${

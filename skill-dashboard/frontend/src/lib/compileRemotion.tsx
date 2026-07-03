@@ -11,21 +11,28 @@ import * as Remotion from "remotion";
 import * as RemotionShapes from "@remotion/shapes";
 import * as RemotionTransitions from "@remotion/transitions";
 
-const ALLOWED_MODULES: Record<string, unknown> = {
-  react: React,
-  "react/jsx-runtime": ReactJsxRuntime,
-  "react/jsx-dev-runtime": ReactJsxRuntime,
-  remotion: Remotion,
-  "@remotion/shapes": RemotionShapes,
-  "@remotion/transitions": RemotionTransitions,
-};
-
 export interface CompileResult {
   component: React.ComponentType | null;
   error: string | null;
 }
 
-export function compileRemotion(code: string): CompileResult {
+// `assetsBaseUrl`: si se pasa, se sobreescribe `staticFile()` para que en la PREVIEW en vivo
+// los recursos subidos se sirvan desde el backend (en el render real de Node, staticFile ya
+// resuelve la carpeta public, así que el mismo código funciona en ambos lados).
+export function compileRemotion(code: string, assetsBaseUrl?: string): CompileResult {
+  const remotionModule = assetsBaseUrl
+    ? { ...Remotion, staticFile: (name: string) => `${assetsBaseUrl}${encodeURIComponent(name)}` }
+    : Remotion;
+
+  const ALLOWED_MODULES: Record<string, unknown> = {
+    react: React,
+    "react/jsx-runtime": ReactJsxRuntime,
+    "react/jsx-dev-runtime": ReactJsxRuntime,
+    remotion: remotionModule,
+    "@remotion/shapes": RemotionShapes,
+    "@remotion/transitions": RemotionTransitions,
+  };
+
   try {
     const transformed = Babel.transform(code, {
       filename: "Main.tsx",

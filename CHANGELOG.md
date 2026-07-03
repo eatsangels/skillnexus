@@ -4,6 +4,16 @@ Todos los cambios notables de SkillNexus se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.0.0/)
 y el proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
+## [1.0.33] - 2026-07-02
+
+### Añadido (Video Studio — Recursos)
+- **Botón "+ Insertar"** en cada recurso subido: agrega el código directamente en el editor
+  (en la posición del cursor) e inserta automáticamente el import de remotion necesario
+  (Img/Audio/Video/staticFile), sin copiar y pegar a mano.
+- **Los recursos subidos ahora se ven en la previsualización en vivo**, no solo al renderizar:
+  se sobreescribe `staticFile()` en el preview para servirlos desde el backend. El mismo
+  código funciona en preview y en el render real.
+
 ## [1.0.32] - 2026-07-02
 
 ### Añadido (Video Studio)
