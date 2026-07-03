@@ -146,6 +146,29 @@ export async function fetchDashboard(): Promise<{ stats: DashboardStats; version
   }
 }
 
+export async function fetchOllamaModels(): Promise<{ available: boolean; models: string[] }> {
+  try {
+    const res = await fetch(`${BASE}/ollama/models`);
+    if (!res.ok) return { available: false, models: [] };
+    return await res.json();
+  } catch {
+    return { available: false, models: [] };
+  }
+}
+
+export async function generateVideoWithOllama(model: string, prompt: string): Promise<{ code: string }> {
+  const res = await fetch(`${BASE}/ollama/generate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model, prompt }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: "Fallo al generar" }));
+    throw new Error(err.error || "Fallo al generar");
+  }
+  return res.json();
+}
+
 export interface AppSettings {
   skillInstallDir: string;
   extraSkillDirs: string[];

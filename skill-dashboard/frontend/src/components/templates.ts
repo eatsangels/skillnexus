@@ -869,5 +869,194 @@ export default function Main() {
     </AbsoluteFill>
   );
 }`
+  },
+  {
+    name: "Cuenta Regresiva (Countdown)",
+    description: "Números 3-2-1 con escala y desvanecimiento. Ideal para intros.",
+    category: "Texto",
+    difficulty: "Fácil",
+    code: `import { AbsoluteFill, useCurrentFrame, useVideoConfig, interpolate } from 'remotion';
+
+export default function Main() {
+  const frame = useCurrentFrame();
+  const { durationInFrames } = useVideoConfig();
+  const total = 3;
+  const per = durationInFrames / total;
+  const idx = Math.min(total - 1, Math.floor(frame / per));
+  const local = frame - idx * per;
+  const scale = interpolate(local, [0, per * 0.3, per], [0.4, 1.2, 0.9], { extrapolateRight: 'clamp' });
+  const opacity = interpolate(local, [0, per * 0.2, per * 0.8, per], [0, 1, 1, 0]);
+  return (
+    <AbsoluteFill style={{ backgroundColor: '#0b0b14', justifyContent: 'center', alignItems: 'center', fontFamily: 'system-ui' }}>
+      <div style={{ fontSize: 260, fontWeight: 900, color: '#8b5cf6', transform: \`scale(\${scale})\`, opacity }}>
+        {total - idx}
+      </div>
+    </AbsoluteFill>
+  );
+}`
+  },
+  {
+    name: "Lower Third (Nombre y Cargo)",
+    description: "Rótulo inferior que entra deslizando. Para presentar personas.",
+    category: "Texto",
+    difficulty: "Intermedio",
+    code: `import { AbsoluteFill, useCurrentFrame, useVideoConfig, spring, interpolate } from 'remotion';
+
+export default function Main() {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const enter = spring({ frame, fps, config: { damping: 14 } });
+  const x = interpolate(enter, [0, 1], [-500, 0]);
+  return (
+    <AbsoluteFill style={{ backgroundColor: '#05070b', justifyContent: 'flex-end', padding: 80, fontFamily: 'system-ui' }}>
+      <div style={{ transform: \`translateX(\${x}px)\`, background: 'linear-gradient(90deg, #8b5cf6, #ec4899)', padding: '18px 30px', borderRadius: 12, alignSelf: 'flex-start' }}>
+        <div style={{ color: 'white', fontSize: 44, fontWeight: 800 }}>Edward Trinidad</div>
+        <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 24 }}>Creador de SkillNexus</div>
+      </div>
+    </AbsoluteFill>
+  );
+}`
+  },
+  {
+    name: "Máquina de Escribir (Typewriter)",
+    description: "El texto aparece carácter por carácter con cursor parpadeante.",
+    category: "Texto",
+    difficulty: "Fácil",
+    code: `import { AbsoluteFill, useCurrentFrame } from 'remotion';
+
+export default function Main() {
+  const frame = useCurrentFrame();
+  const text = 'Hola, esto es SkillNexus.';
+  const chars = Math.floor(frame / 3);
+  const shown = text.slice(0, chars);
+  const cursor = Math.floor(frame / 15) % 2 === 0 ? '|' : ' ';
+  return (
+    <AbsoluteFill style={{ backgroundColor: '#0d1117', justifyContent: 'center', alignItems: 'center', fontFamily: 'ui-monospace, monospace' }}>
+      <div style={{ color: '#39ff14', fontSize: 60 }}>{shown}<span>{cursor}</span></div>
+    </AbsoluteFill>
+  );
+}`
+  },
+  {
+    name: "Fondo Gradiente Animado",
+    description: "Un gradiente que rota lentamente. Perfecto como fondo de otras capas.",
+    category: "Gráficos",
+    difficulty: "Fácil",
+    code: `import { AbsoluteFill, useCurrentFrame, interpolate } from 'remotion';
+
+export default function Main() {
+  const frame = useCurrentFrame();
+  const angle = interpolate(frame, [0, 200], [0, 360]);
+  return (
+    <AbsoluteFill style={{ background: \`linear-gradient(\${angle}deg, #7c3aed, #ec4899, #06b6d4)\`, justifyContent: 'center', alignItems: 'center', fontFamily: 'system-ui' }}>
+      <h1 style={{ color: 'white', fontSize: 90, fontWeight: 900, textShadow: '0 4px 30px rgba(0,0,0,0.3)' }}>SkillNexus</h1>
+    </AbsoluteFill>
+  );
+}`
+  },
+  {
+    name: "Logo Reveal (Escala + Brillo)",
+    description: "Un texto/logo aparece con escala elástica y un destello.",
+    category: "Básico",
+    difficulty: "Intermedio",
+    code: `import { AbsoluteFill, useCurrentFrame, useVideoConfig, spring, interpolate } from 'remotion';
+
+export default function Main() {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const s = spring({ frame, fps, config: { damping: 10, mass: 0.8 } });
+  const glow = interpolate(frame, [10, 25, 45], [0, 40, 12], { extrapolateRight: 'clamp' });
+  return (
+    <AbsoluteFill style={{ backgroundColor: '#05070b', justifyContent: 'center', alignItems: 'center', fontFamily: 'system-ui' }}>
+      <h1 style={{ fontSize: 120, fontWeight: 900, color: 'white', transform: \`scale(\${s})\`, textShadow: \`0 0 \${glow}px #8b5cf6\` }}>NEXUS</h1>
+    </AbsoluteFill>
+  );
+}`
+  },
+  {
+    name: "Barra de Progreso",
+    description: "Una barra que se llena de 0 a 100% con porcentaje.",
+    category: "Gráficos",
+    difficulty: "Fácil",
+    code: `import { AbsoluteFill, useCurrentFrame, useVideoConfig, interpolate } from 'remotion';
+
+export default function Main() {
+  const frame = useCurrentFrame();
+  const { durationInFrames } = useVideoConfig();
+  const pct = interpolate(frame, [0, durationInFrames], [0, 100], { extrapolateRight: 'clamp' });
+  return (
+    <AbsoluteFill style={{ backgroundColor: '#0b0b14', justifyContent: 'center', alignItems: 'center', fontFamily: 'system-ui', gap: 20 }}>
+      <div style={{ color: 'white', fontSize: 70, fontWeight: 800 }}>{Math.round(pct)}%</div>
+      <div style={{ width: 700, height: 22, background: '#1e1e2e', borderRadius: 20, overflow: 'hidden' }}>
+        <div style={{ width: \`\${pct}%\`, height: '100%', background: 'linear-gradient(90deg,#8b5cf6,#ec4899)' }} />
+      </div>
+    </AbsoluteFill>
+  );
+}`
+  },
+  {
+    name: "Tipografía Cinética (Palabras)",
+    description: "Una frase donde cada palabra entra en secuencia.",
+    category: "Texto",
+    difficulty: "Intermedio",
+    code: `import { AbsoluteFill, useCurrentFrame, useVideoConfig, spring } from 'remotion';
+
+export default function Main() {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const words = ['Crea', 'videos', 'con', 'código'];
+  return (
+    <AbsoluteFill style={{ backgroundColor: '#05070b', justifyContent: 'center', alignItems: 'center', fontFamily: 'system-ui', gap: 16, flexDirection: 'row', flexWrap: 'wrap' }}>
+      {words.map((w, i) => {
+        const s = spring({ frame: frame - i * 10, fps, config: { damping: 12 } });
+        return (
+          <span key={i} style={{ fontSize: 90, fontWeight: 900, color: 'white', opacity: s, transform: \`translateY(\${(1 - s) * 40}px)\` }}>{w}</span>
+        );
+      })}
+    </AbsoluteFill>
+  );
+}`
+  },
+  {
+    name: "Formas Rebotando",
+    description: "Círculos que caen y rebotan con física simple usando springs.",
+    category: "Gráficos",
+    difficulty: "Intermedio",
+    code: `import { AbsoluteFill, useCurrentFrame, useVideoConfig, spring, interpolate } from 'remotion';
+
+export default function Main() {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const colors = ['#8b5cf6', '#ec4899', '#06b6d4', '#f59e0b'];
+  return (
+    <AbsoluteFill style={{ backgroundColor: '#0b0b14', justifyContent: 'center', alignItems: 'flex-end', paddingBottom: 200, gap: 40 }}>
+      {colors.map((c, i) => {
+        const s = spring({ frame: frame - i * 6, fps, config: { damping: 8, mass: 0.6 } });
+        const y = interpolate(s, [0, 1], [-300, 0]);
+        return <div key={i} style={{ width: 120, height: 120, borderRadius: '50%', background: c, transform: \`translateY(\${y}px)\` }} />;
+      })}
+    </AbsoluteFill>
+  );
+}`
+  },
+  {
+    name: "Título + Subtítulo (Slide-in)",
+    description: "Título y subtítulo que entran desde lados opuestos.",
+    category: "Básico",
+    difficulty: "Fácil",
+    code: `import { AbsoluteFill, useCurrentFrame, useVideoConfig, spring, interpolate } from 'remotion';
+
+export default function Main() {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const a = spring({ frame, fps, config: { damping: 16 } });
+  const b = spring({ frame: frame - 8, fps, config: { damping: 16 } });
+  return (
+    <AbsoluteFill style={{ backgroundColor: '#05070b', justifyContent: 'center', alignItems: 'center', fontFamily: 'system-ui' }}>
+      <h1 style={{ color: 'white', fontSize: 100, fontWeight: 900, transform: \`translateX(\${interpolate(a, [0,1], [-600, 0])}px)\`, margin: 0 }}>SkillNexus</h1>
+      <p style={{ color: '#94a3b8', fontSize: 36, transform: \`translateX(\${interpolate(b, [0,1], [600, 0])}px)\` }}>Gestión inteligente de agentes</p>
+    </AbsoluteFill>
+  );
+}`
   }
 ];

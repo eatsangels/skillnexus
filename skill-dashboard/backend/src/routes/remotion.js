@@ -173,6 +173,8 @@ router.post("/render", async (req, res) => {
         dependencies: {
           "remotion": "^4.0.0",
           "@remotion/cli": "^4.0.0",
+          "@remotion/shapes": "^4.0.0",
+          "@remotion/transitions": "^4.0.0",
           "react": "^18.0.0",
           "react-dom": "^18.0.0",
           "maplibre-gl": "^4.0.0",
@@ -205,7 +207,8 @@ router.post("/render", async (req, res) => {
           if (
             !currentPkg.dependencies ||
             !currentPkg.dependencies["maplibre-gl"] ||
-            !currentPkg.dependencies["@types/react"]
+            !currentPkg.dependencies["@types/react"] ||
+            !currentPkg.dependencies["@remotion/shapes"]
           ) {
             needsInstall = true;
           }

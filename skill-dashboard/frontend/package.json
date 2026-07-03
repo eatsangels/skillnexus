@@ -21,6 +21,8 @@
   "dependencies": {
     "@babel/standalone": "^7.29.7",
     "@remotion/player": "^4.0.484",
+    "@remotion/shapes": "^4.0.484",
+    "@remotion/transitions": "^4.0.484",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "remotion": "^4.0.484"

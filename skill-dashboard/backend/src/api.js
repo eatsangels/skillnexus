@@ -9,6 +9,7 @@ import { join, dirname } from "path";
 import { CONFIG } from "./config.js";
 import { loadSettings, saveSettings, SETTINGS_PATH } from "./settings.js";
 import remotionRouter from "./routes/remotion.js";
+import ollamaRouter from "./routes/ollama.js";
 import { watch, existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync, statSync, unlinkSync } from "fs";
 import { fileURLToPath } from "url";
 
@@ -497,6 +498,7 @@ setupWatchers();
 
 // Remotion Studio: montado como sub-router (ver routes/remotion.js)
 router.use("/remotion", remotionRouter);
+router.use("/ollama", ollamaRouter);
 
 export default router;
 

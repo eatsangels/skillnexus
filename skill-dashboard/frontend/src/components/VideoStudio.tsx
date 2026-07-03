@@ -159,6 +159,13 @@ export default function VideoStudio({ base }: Props) {
   const [duration, setDuration] = useState<number>(saved?.duration ?? 3);
   const [previewMode, setPreviewMode] = useState<"live" | "rendered">("live");
   const [outputFormat, setOutputFormat] = useState<"mp4" | "webm" | "gif">(saved?.outputFormat ?? "mp4");
+  // IA local con Ollama
+  const [ollamaAvailable, setOllamaAvailable] = useState(false);
+  const [ollamaModels, setOllamaModels] = useState<string[]>([]);
+  const [ollamaModel, setOllamaModel] = useState<string>("");
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiError, setAiError] = useState("");
   const [isRendering, setIsRendering] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
@@ -284,9 +291,48 @@ export default function VideoStudio({ base }: Props) {
     }, 2000);
   };
 
+  // Detectar modelos de Ollama disponibles al montar.
+  const loadOllamaModels = async () => {
+    try {
+      const res = await fetch(`${base}/ollama/models`);
+      const data = await res.json();
+      setOllamaAvailable(!!data.available);
+      setOllamaModels(data.models || []);
+      if (data.models && data.models.length > 0) {
+        setOllamaModel((prev) => prev || data.models[0]);
+      }
+    } catch {
+      setOllamaAvailable(false);
+    }
+  };
+
+  const generateWithAI = async () => {
+    if (!aiPrompt.trim() || !ollamaModel || aiGenerating) return;
+    setAiGenerating(true);
+    setAiError("");
+    try {
+      const res = await fetch(`${base}/ollama/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: ollamaModel, prompt: aiPrompt }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Fallo al generar");
+      if (data.code) {
+        setCode(data.code);
+        setPreviewMode("live");
+      }
+    } catch (e) {
+      setAiError(e instanceof Error ? e.message : "Fallo al generar");
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
   useEffect(() => {
     checkAuth();
     fetchAssets();
+    loadOllamaModels();
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -525,6 +571,62 @@ export default function VideoStudio({ base }: Props) {
                 className="bg-surface-900 border border-surface-700/50 focus:border-brand-500/50 rounded-xl px-3 py-2 text-sm text-surface-200 focus:outline-none"
               />
             </div>
+          </div>
+
+          {/* Generar con IA (Ollama local) */}
+          <div className="bg-gradient-to-br from-brand-500/10 to-fuchsia-500/5 border border-brand-500/25 rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs font-bold text-brand-300 flex items-center gap-1.5">
+                ✨ Generar con IA (Ollama local)
+              </p>
+              {ollamaAvailable ? (
+                <select
+                  value={ollamaModel}
+                  onChange={(e) => setOllamaModel(e.target.value)}
+                  className="bg-surface-900 border border-surface-700/50 rounded-lg px-2 py-1 text-[11px] text-surface-200 focus:outline-none cursor-pointer max-w-[180px]"
+                  title="Modelo de Ollama"
+                >
+                  {ollamaModels.map((m) => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+              ) : (
+                <button
+                  onClick={loadOllamaModels}
+                  className="text-[10px] text-surface-400 hover:text-brand-300 underline cursor-pointer"
+                  title="Reintentar detección de Ollama"
+                >
+                  Ollama no detectado — reintentar
+                </button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={aiPrompt}
+                onChange={(e) => setAiPrompt(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") generateWithAI(); }}
+                disabled={!ollamaAvailable || aiGenerating}
+                placeholder={ollamaAvailable ? "Describe tu video: ej. 'intro con mi logo y texto neón violeta'" : "Inicia Ollama en tu PC para usar esto"}
+                className="flex-1 bg-surface-900 border border-surface-700/50 focus:border-brand-500/50 rounded-lg px-3 py-2 text-xs text-surface-200 placeholder-surface-500 focus:outline-none disabled:opacity-50"
+              />
+              <button
+                onClick={generateWithAI}
+                disabled={!ollamaAvailable || aiGenerating || !aiPrompt.trim()}
+                className="bg-brand-600 hover:bg-brand-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold px-4 py-2 rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5"
+              >
+                {aiGenerating ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Generando…
+                  </>
+                ) : "Generar código"}
+              </button>
+            </div>
+            {aiError && <p className="text-[11px] text-rose-400">{aiError}</p>}
+            <p className="text-[10px] text-surface-500">
+              Usa tus modelos locales de Ollama. El resultado reemplaza el código del editor; luego puedes ajustarlo y renderizar.
+            </p>
           </div>
 
           {/* Formato de salida */}

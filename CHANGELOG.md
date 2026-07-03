@@ -4,6 +4,18 @@ Todos los cambios notables de SkillNexus se documentan aquí.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.0.0/)
 y el proyecto usa [Versionado Semántico](https://semver.org/lang/es/).
 
+## [1.0.32] - 2026-07-02
+
+### Añadido (Video Studio)
+- **Generación de código con IA usando Ollama local**: detecta los modelos cargados en
+  Ollama (`localhost:11434`) y genera componentes Remotion a partir de un prompt en lenguaje
+  natural — gratis, local, sin claves. Endpoints `/ollama/models` y `/ollama/generate`.
+- **Librería de plantillas ampliada**: 10 plantillas nuevas (countdown, lower third,
+  typewriter, gradiente animado, logo reveal, barra de progreso, tipografía cinética,
+  formas rebotando, slide-in, etc.), buscables desde la Biblioteca de Plantillas.
+- **Sandbox ampliado**: el preview y el render local ahora permiten `@remotion/shapes` y
+  `@remotion/transitions` además del core de `remotion`.
+
 ## [1.0.31] - 2026-07-02
 
 ### Corregido (Video Studio)

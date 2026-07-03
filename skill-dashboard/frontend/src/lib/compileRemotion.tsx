@@ -8,12 +8,16 @@ import * as Babel from "@babel/standalone";
 import React from "react";
 import * as ReactJsxRuntime from "react/jsx-runtime";
 import * as Remotion from "remotion";
+import * as RemotionShapes from "@remotion/shapes";
+import * as RemotionTransitions from "@remotion/transitions";
 
 const ALLOWED_MODULES: Record<string, unknown> = {
   react: React,
   "react/jsx-runtime": ReactJsxRuntime,
   "react/jsx-dev-runtime": ReactJsxRuntime,
   remotion: Remotion,
+  "@remotion/shapes": RemotionShapes,
+  "@remotion/transitions": RemotionTransitions,
 };
 
 export interface CompileResult {
